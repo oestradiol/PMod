@@ -19,8 +19,8 @@ namespace PMod
     public static class BuildInfo
     {
         public const string Name = "PMod";
-        public const string Author = "Davi";
-        public const string Version = "1.2.1";
+        public const string Author = "Davi, Lily, Arion";
+        public const string Version = "1.3.0";
     }
 
     public static class Main

@@ -4,6 +4,8 @@ using UnityEngine;
 using TMPro;
 using VRC;
 using Object = UnityEngine.Object;
+using MelonLoader;
+using System.Linq;
 
 namespace PMod.Modules
 {
@@ -24,6 +26,8 @@ namespace PMod.Modules
                 var TM = timer.text.GetComponentInChildren<TextMeshProUGUI>();
                 TM.text = "Frozen";
                 TM.color = Color.cyan;
+                if (MelonHandler.Mods.Any(m => m.Info.Name.Contains("Mint")))
+                    try { timer.text.transform.gameObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, 30); } catch { }
                 timer.text.SetActive(false);
             }
         }
