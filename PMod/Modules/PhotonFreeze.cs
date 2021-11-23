@@ -31,6 +31,29 @@ namespace PMod.Modules
                 PhotonID = player.gameObject.GetComponent<PhotonView>().viewIdField;
         }
 
+        internal Vector3 PreviousPos;
+        internal bool IsMaxD = false;
+        internal override void OnUpdate()
+        {
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L))
+            {
+                var temp = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject.transform;
+                IsMaxD = !IsMaxD;
+                if (IsMaxD)
+                {
+                    PreviousPos = temp.position;
+                    temp.position = new Vector3(10000000, 10000000, 10000000);
+                }
+                else
+                    temp.position = PreviousPos;
+            }
+            else if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.K))
+            {
+                ToggleFreeze();
+                FreezeMenu.Hide();
+            }
+        }
+
         internal void ShowFreezeMenu()
         {
             FreezeMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);

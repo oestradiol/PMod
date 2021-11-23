@@ -31,7 +31,7 @@ namespace PMod
 
 		internal static AvatarFromID avatarFromID;
 		internal static EmmAllower emmAllower;
-		internal static ForceClone forceClone;
+		//internal static ForceClone forceClone;
 		internal static FrozenPlayersManager frozenPlayersManager;
 		internal static InvisibleJoin invisibleJoin;
 		internal static ItemGrabber itemGrabber;
@@ -44,7 +44,7 @@ namespace PMod
 		{
 			modules.Add(avatarFromID = new());
 			modules.Add(emmAllower = new());
-			modules.Add(forceClone = new());
+			//modules.Add(forceClone = new());
 			modules.Add(frozenPlayersManager = new());
 		    modules.Add(invisibleJoin = new());
 			modules.Add(itemGrabber = new());

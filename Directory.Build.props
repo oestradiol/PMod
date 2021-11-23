@@ -112,5 +112,13 @@
 				<HintPath>$(MelonManaged)\VRCSDKBase.dll</HintPath>
 				<Private>False</Private>
 			</Reference>
+			<Reference Include="VRC.UI.Elements">
+				<HintPath>$(MelonManaged)\VRC.UI.Elements.dll</HintPath>
+				<Private>False</Private>
+			</Reference>
+			<Reference Include="DataModel">
+				<HintPath>$(MelonManaged)\DataModel.dll</HintPath>
+				<Private>False</Private>
+			</Reference>
 		</ItemGroup>
 </Project>

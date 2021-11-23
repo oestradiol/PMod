@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using System.Security.Cryptography;
 using MelonLoader;
+using UnityEngine;
 using VRC.Core;
 using PMod.Loader;
 using System.Text.RegularExpressions;
@@ -14,42 +15,32 @@ namespace PMod.Modules
     internal class UserInteractUtils : ModuleBase
     {
         private MelonPreferences_Entry<string> ToPath;
-        private MelonPreferences_Entry<int> ActionBtnX, ActionBtnY;
-        private int tempXLoc, tempYLoc;
 
-        internal static QMNestedButton ActionMenu;
-        internal static QMSingleButton CopyAssetButton;
+        internal static VRC.UI.Elements.Menus.SelectedUserMenuQM selectedUserMenuQM;
+        internal static UnityEngine.UI.Button CopyAssetButton;
 
         internal UserInteractUtils()
         {
             MelonPreferences.CreateCategory("UserInteractUtils", "PM - User Interact Utils");
             ToPath = MelonPreferences.CreateEntry("UserInteractUtils", "ToPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
-            ActionBtnX = MelonPreferences.CreateEntry("UserInteractUtils", "ActionBtnX", 0, "Actions Button Coord X");
-            ActionBtnY = MelonPreferences.CreateEntry("UserInteractUtils", "ActionBtnY", 0, "Actions Button Coord Y");
         }
 
         internal override void OnUiManagerInit()
         {
-            tempXLoc = ActionBtnX.Value; // cache temp X button location
-            tempYLoc = ActionBtnY.Value; // cache temp Y button location
-            ActionMenu = new QMNestedButton("UserInteractMenu", ActionBtnX.Value, ActionBtnY.Value, $"<color=#ff0000>{BuildInfo.Name}'s\n</color>Actions", "Open the Actions Menu");
-            CopyAssetButton = new QMSingleButton(ActionMenu, 1, 0, "Copy\nAsset", () => CopyAsset(),
-                "Copies the asset file to the destined folder.", null, null);
-        }
-
-        internal override void OnPreferencesSaved()
-        {
-            if (ActionBtnX.Value != tempXLoc || ActionBtnY.Value != tempYLoc)
-            { // Values Have changed on Pref Save
-                ActionMenu.DestroyMe();         // Destroy
-                CopyAssetButton.DestroyMe();    // Destroy
-                OnUiManagerInit();              // Destroy and Recreate
-            }
+            selectedUserMenuQM = Resources.FindObjectsOfTypeAll<VRC.UI.Elements.Menus.SelectedUserMenuQM>()[1];
+            var AddToFavoritesButton = selectedUserMenuQM.transform.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_AvatarActions/Button_AddToFavorites");
+            CopyAssetButton = UnityEngine.Object.Instantiate(AddToFavoritesButton, AddToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<UnityEngine.UI.Button>();
+            UnityEngine.Object.DestroyImmediate(CopyAssetButton.GetComponent<VRC.UI.Elements.Buttons.MuteUserButton>());
+            CopyAssetButton.onClick = new();
+            CopyAssetButton.onClick.AddListener(new Action(() => CopyAsset()));
+            CopyAssetButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Copy Asset";
+            CopyAssetButton.GetComponent<VRC.UI.Elements.Tooltips.UiTooltip>().field_Public_String_0 = "Copies the asset file to the destined folder.";
+            CopyAssetButton.name = "Button_CopyAssetButton";
         }
 
         private void CopyAsset()
         {
-            ApiAvatar avatar = Utilities.GetPlayerFromID(QuickMenu.prop_QuickMenu_0.field_Private_APIUser_0.id).prop_ApiAvatar_0;
+            ApiAvatar avatar = Utilities.GetPlayerFromID(selectedUserMenuQM.field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
             if (!Directory.Exists(ToPath.Value)) Directory.CreateDirectory(ToPath.Value);
             try
             {

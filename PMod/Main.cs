@@ -20,13 +20,12 @@ namespace PMod
     {
         public const string Name = "PMod";
         public const string Author = "Davi, Lily, Arion";
-        public const string Version = "1.3.0";
+        public const string Version = "1.3.1";
     }
 
     public static class Main
     {
         internal static HarmonyLib.Harmony HInstance => MelonHandler.Mods.First(m => m.Info.Name == LInfo.Name).HarmonyInstance;
-        internal static EnableDisableListener listener;
         internal static ICustomShowableLayoutedMenu ClientMenu;
 
         public static void OnApplicationStart()
@@ -35,7 +34,7 @@ namespace PMod
             NativePatches.OnApplicationStart();
             NetworkEvents.OnPlayerLeftAction += OnPlayerLeft;
             NetworkEvents.OnPlayerJoinedAction += OnPlayerJoined;
-            ClassInjector.RegisterTypeInIl2Cpp<EnableDisableListener>();
+            //ClassInjector.RegisterTypeInIl2Cpp<EnableDisableListener>();
             PLogger.Msg(ConsoleColor.Green, $"{BuildInfo.Name} Loaded Successfully!");
         }
 
@@ -44,7 +43,6 @@ namespace PMod
             try
             {
                 ExpansionKitApi.GetExpandedMenu(ExpandedMenu.QuickMenu).AddSimpleButton($"{BuildInfo.Name}", () => ShowClientMenu());
-                listener = QuickMenu.prop_QuickMenu_0.transform.Find("UserInteractMenu").gameObject.AddComponent<EnableDisableListener>();
                 ModulesManager.OnUiManagerInit();
                 NetworkEvents.OnUiManagerInit();
             }
@@ -81,7 +79,7 @@ namespace PMod
         {
             ClientMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
             ClientMenu.AddSimpleButton("Close Menu", ClientMenu.Hide);
-            ClientMenu.AddSimpleButton("Beep", () => SendRPC("GetBeepedLol"));
+            //ClientMenu.AddSimpleButton("Beep", () => SendRPC("GetBeepedLol"));
             if (ModulesManager.invisibleJoin.IsOn.Value)  
                 ClientMenu.AddToggleButton("Always Join Invisible?", (isOn) => ModulesManager.invisibleJoin.SetJoinMode(isOn), () => !ModulesManager.invisibleJoin.onceOnly);
             ClientMenu.AddSimpleButton("Orbit", () =>
@@ -105,25 +103,25 @@ namespace PMod
 
         // Got from KiraiLib https://github.com/xKiraiChan/KiraiLibs/blob/9ccba43ca646860ec87f07ae364b81a87f568f5d/KiraiRPC/SendRPC.cs#L28
         // Be careful using this since I literally didn't add check for Moderators lol
-        public static void SendRPC(string raw)
-        {
-            PLogger.Msg("Sending RPC...");
-            var handler = UnityEngine.Object.FindObjectOfType<VRC_EventHandler>();
-            handler.TriggerEvent(
-                new VRC_EventHandler.VrcEvent
-                {
-                    EventType = VRC_EventHandler.VrcEventType.SendRPC,
-                    Name = "SendRPC",
-                    ParameterObject = handler.gameObject,
-                    ParameterInt = Player.prop_Player_0.field_Private_VRCPlayerApi_0.playerId,
-                    ParameterFloat = 0f,
-                    ParameterString = "UdonSyncRunProgramAsRPC",
-                    ParameterBoolOp = VRC_EventHandler.VrcBooleanOp.Unused,
-                    ParameterBytes = Networking.EncodeParameters(new Il2CppSystem.Object[] {raw})
-                },
-                VRC_EventHandler.VrcBroadcastType.AlwaysUnbuffered, 
-                VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject, 
-                0f);
-        }
+        //public static void SendRPC(string raw)
+        //{
+        //    PLogger.Msg("Sending RPC...");
+        //    var handler = UnityEngine.Object.FindObjectOfType<VRC_EventHandler>();
+        //    handler.TriggerEvent(
+        //        new VRC_EventHandler.VrcEvent
+        //        {
+        //            EventType = VRC_EventHandler.VrcEventType.SendRPC,
+        //            Name = "SendRPC",
+        //            ParameterObject = handler.gameObject,
+        //            ParameterInt = Player.prop_Player_0.field_Private_VRCPlayerApi_0.playerId,
+        //            ParameterFloat = 0f,
+        //            ParameterString = "UdonSyncRunProgramAsRPC",
+        //            ParameterBoolOp = VRC_EventHandler.VrcBooleanOp.Unused,
+        //            ParameterBytes = Networking.EncodeParameters(new Il2CppSystem.Object[] {raw})
+        //        },
+        //        VRC_EventHandler.VrcBroadcastType.AlwaysUnbuffered, 
+        //        VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject, 
+        //        0f);
+        //}
     }
 }
