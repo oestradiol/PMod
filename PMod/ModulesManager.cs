@@ -78,4 +78,42 @@ namespace PMod
 		public static void OnAvatarInitialized(GameObject avatar, VRCAvatarManager manager)
 		{ foreach (ModuleBase module in modules) module.OnAvatarInitialized(avatar, manager); }
     }
+
+	// // Something like this would be a better and more optimized alternative maybe?
+	//internal static class ModulesManager
+	//{
+	//	internal static AvatarFromID avatarFromID;
+	//	internal static EmmAllower emmAllower;
+	//	//internal static ForceClone forceClone;
+	//	internal static FrozenPlayersManager frozenPlayersManager;
+	//	internal static InvisibleJoin invisibleJoin;
+	//	internal static ItemGrabber itemGrabber;
+	//	internal static Orbit orbit;
+	//	internal static PhotonFreeze photonFreeze;
+	//	internal static Triggers triggers;
+	//	internal static UserInteractUtils userInteractUtils;
+
+	//	internal static Action OnUiManagerInit;
+	//	internal static Action OnPreferencesSaved;
+	//	internal static Action<int, string> OnSceneWasLoaded;
+	//	internal static Action OnUpdate;
+	//	internal static Action<Player> OnPlayerJoined;
+	//	internal static Action<Player> OnPlayerLeft;
+	//	internal static Action<ApiWorld, ApiWorldInstance> OnInstanceChange;
+	//	internal static Action<GameObject, VRCAvatarManager> OnAvatarInitialized;
+
+	//	public static void Initialize()
+	//	{
+	//		avatarFromID = new();
+	//		emmAllower = new();
+	//		//forceClone = new();
+	//		frozenPlayersManager = new();
+	//		invisibleJoin = new();
+	//		itemGrabber = new();
+	//		orbit = new());
+	//		photonFreeze = new();
+	//		triggers = new();
+	//		userInteractUtils = new();
+	//	}
+	//}
 }

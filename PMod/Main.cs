@@ -20,7 +20,7 @@ namespace PMod
     {
         public const string Name = "PMod";
         public const string Author = "Davi, Lily, Arion";
-        public const string Version = "1.3.1";
+        public const string Version = "1.3.2";
     }
 
     public static class Main
@@ -37,7 +37,6 @@ namespace PMod
             //ClassInjector.RegisterTypeInIl2Cpp<EnableDisableListener>();
             PLogger.Msg(ConsoleColor.Green, $"{BuildInfo.Name} Loaded Successfully!");
         }
-
         public static void VRChat_OnUiManagerInit()
         {
             try
@@ -52,11 +51,8 @@ namespace PMod
                 PLogger.Error(e);
             }
         }
-
         public static void OnSceneWasLoaded(int buildIndex, string sceneName) => ModulesManager.OnSceneWasLoaded(buildIndex, sceneName);
-
         public static void OnUpdate() => ModulesManager.OnUpdate();
-
         public static void OnPreferencesSaved() => ModulesManager.OnPreferencesSaved();
         public static void OnFixedUpdate() { }
         public static void OnLateUpdate() { }
@@ -64,9 +60,7 @@ namespace PMod
         public static void OnApplicationQuit() { }
         public static void OnPreferencesLoaded() { }
         public static void OnSceneWasInitialized(int buildIndex, string sceneName) { }
-
         internal static void OnPlayerJoined(Player player) => ModulesManager.OnPlayerJoined(player);
-
         internal static void OnPlayerLeft(Player player) => ModulesManager.OnPlayerLeft(player);
 
         internal static void RiskyFuncAlert(string FuncName) => DelegateMethods.PopupV2(

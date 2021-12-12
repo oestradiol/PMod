@@ -166,37 +166,37 @@ namespace PMod.Loader
                 switch (m.Name)
                 {
                     case nameof(OnApplicationStart) when parameters.Length == 0:
-                        _onApplicationStart = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onApplicationStart += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(OnApplicationQuit) when parameters.Length == 0:
-                        _onApplicationQuit = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onApplicationQuit += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(OnSceneWasLoaded) when parameters.Length == 2 && parameters[0].ParameterType == typeof(int) && parameters[1].ParameterType == typeof(string):
-                        _onSceneWasLoaded = (Action<int, string>)Delegate.CreateDelegate(typeof(Action<int, string>), m);
+                        _onSceneWasLoaded += (Action<int, string>)Delegate.CreateDelegate(typeof(Action<int, string>), m);
                         break;
                     case nameof(OnSceneWasInitialized) when parameters.Length == 2 && parameters[0].ParameterType == typeof(int) && parameters[1].ParameterType == typeof(string):
-                        _onSceneWasInitialized = (Action<int, string>)Delegate.CreateDelegate(typeof(Action<int, string>), m);
+                        _onSceneWasInitialized += (Action<int, string>)Delegate.CreateDelegate(typeof(Action<int, string>), m);
                         break;
                     case nameof(OnUpdate) when parameters.Length == 0:
-                        _onUpdate = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onUpdate += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(VRChat_OnUiManagerInit) when parameters.Length == 0:
-                        _onUiManagerInit = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onUiManagerInit += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(OnGUI) when parameters.Length == 0:
-                        _onGUI = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onGUI += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(OnLateUpdate) when parameters.Length == 0:
-                        _onLateUpdate = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onLateUpdate += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(OnFixedUpdate) when parameters.Length == 0:
-                        _onFixedUpdate = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onFixedUpdate += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(OnPreferencesLoaded) when parameters.Length == 0:
-                        _onPreferencesLoaded = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onPreferencesLoaded += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                     case nameof(OnPreferencesSaved) when parameters.Length == 0:
-                        _onPreferencesSaved = (Action)Delegate.CreateDelegate(typeof(Action), m);
+                        _onPreferencesSaved += (Action)Delegate.CreateDelegate(typeof(Action), m);
                         break;
                 }
             }

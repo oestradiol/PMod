@@ -29,6 +29,8 @@ namespace PMod.Utils
                         Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/StandardPopupV2") &&
                         Utilities.WasUsedBy(methodBase, "OpenSaveSearchPopup")));
 
+
+
         private static MethodInfo playerFromID;
         internal static MethodInfo PlayerFromID =>
                 playerFromID ??= typeof(PlayerManager).GetMethods()
@@ -99,7 +101,7 @@ namespace PMod.Utils
                     {
                         if (!triggerInvisible) break;
                         RaiseEventOptions REOptions = UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<RaiseEventOptions>(EOptions);
-                        REOptions.field_Public_ReceiverGroup_0 = ReceiverGroup.MasterClient;
+                        REOptions.field_Public_ReceiverGroup_0 = (ReceiverGroup)3;
                         _return = raiseEventDelegate(instancePtr, EType, Obj, EOptions, SOptions, nativeMethodInfoPtr);
                         REOptions.field_Public_ReceiverGroup_0 = ReceiverGroup.Others;
                         if (ModulesManager.invisibleJoin.onceOnly) triggerInvisible = false;

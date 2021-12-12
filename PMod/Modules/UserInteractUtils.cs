@@ -30,7 +30,7 @@ namespace PMod.Modules
             selectedUserMenuQM = Resources.FindObjectsOfTypeAll<VRC.UI.Elements.Menus.SelectedUserMenuQM>()[1];
             var AddToFavoritesButton = selectedUserMenuQM.transform.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_AvatarActions/Button_AddToFavorites");
             CopyAssetButton = UnityEngine.Object.Instantiate(AddToFavoritesButton, AddToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<UnityEngine.UI.Button>();
-            UnityEngine.Object.DestroyImmediate(CopyAssetButton.GetComponent<VRC.UI.Elements.Buttons.MuteUserButton>());
+            UnityEngine.Object.DestroyImmediate(CopyAssetButton.transform.Find("Favorite Disabled Button"));
             CopyAssetButton.onClick = new();
             CopyAssetButton.onClick.AddListener(new Action(() => CopyAsset()));
             CopyAssetButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Copy Asset";
