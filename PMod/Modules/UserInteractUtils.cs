@@ -1,4 +1,5 @@
-﻿using PMod.Utils;
+﻿using PMod.Loader;
+using PMod.Utils;
 using System;
 using System.IO;
 using System.Text;
@@ -7,7 +8,6 @@ using System.Security.Cryptography;
 using MelonLoader;
 using UnityEngine;
 using VRC.Core;
-using PMod.Loader;
 using System.Text.RegularExpressions;
 
 namespace PMod.Modules
@@ -23,6 +23,8 @@ namespace PMod.Modules
         {
             MelonPreferences.CreateCategory("UserInteractUtils", "PM - User Interact Utils");
             ToPath = MelonPreferences.CreateEntry("UserInteractUtils", "ToPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
+            useOnUiManagerInit = true;
+            RegisterSubscriptions();
         }
 
         internal override void OnUiManagerInit()
@@ -30,7 +32,7 @@ namespace PMod.Modules
             selectedUserMenuQM = Resources.FindObjectsOfTypeAll<VRC.UI.Elements.Menus.SelectedUserMenuQM>()[1];
             var AddToFavoritesButton = selectedUserMenuQM.transform.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_AvatarActions/Button_AddToFavorites");
             CopyAssetButton = UnityEngine.Object.Instantiate(AddToFavoritesButton, AddToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<UnityEngine.UI.Button>();
-            UnityEngine.Object.DestroyImmediate(CopyAssetButton.transform.Find("Favorite Disabled Button"));
+            UnityEngine.Object.DestroyImmediate(CopyAssetButton.transform.Find("Favorite Disabled Button").gameObject);
             CopyAssetButton.onClick = new();
             CopyAssetButton.onClick.AddListener(new Action(() => CopyAsset()));
             CopyAssetButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Copy Asset";

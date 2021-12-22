@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PMod.Loader;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using MelonLoader;
@@ -8,7 +9,6 @@ using VRC.SDKBase;
 using UIExpansionKit.API;
 using Object = UnityEngine.Object;
 using Utilities = PMod.Utils.Utilities;
-using PMod.Loader;
 
 namespace PMod.Modules
 {
@@ -35,6 +35,8 @@ namespace PMod.Modules
             PickupMenu.AddSimpleButton("Patch", () => Select("Patch"));
             PickupMenu.AddSimpleButton("Unpatch", () => Select("Unpatch"));
             PickupMenu.AddSimpleButton("Grab", () => Select("Grab"));
+            useOnSceneWasLoaded = true;
+            RegisterSubscriptions();
         }
 
         internal override void OnSceneWasLoaded(int buildIndex, string sceneName)

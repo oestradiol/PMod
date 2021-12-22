@@ -13,12 +13,21 @@ namespace PMod.Modules
     {
         internal bool onceOnly = true;
         internal MelonPreferences_Entry<bool> IsOn;
-        internal Transform JoinButton;
+        private Transform JoinButton;
 
         internal InvisibleJoin()
         {
             MelonPreferences.CreateCategory("InvisibleJoin", "PM - Invisible Join");
             IsOn = MelonPreferences.CreateEntry("InvisibleJoin", "IsOn", false, "Activate Mod? This is a risky function.");
+            useOnUiManagerInit = true;
+            useOnPreferencesSaved = true;
+            RegisterSubscriptions();
+        }
+
+        internal override void OnUiManagerInit()
+        {
+            if (!IsOn.Value) return;
+            InstantiateJoinButton();
         }
 
         internal override void OnPreferencesSaved()
@@ -30,13 +39,7 @@ namespace PMod.Modules
                 Object.DestroyImmediate(JoinButton.gameObject);
         }
 
-        internal override void OnUiManagerInit()
-        {
-            if (!IsOn.Value) return;
-            InstantiateJoinButton();
-        }
-
-        internal void InstantiateJoinButton()
+        private void InstantiateJoinButton()
         {
             Transform ProgressPanel = GameObject.Find("UserInterface/MenuContent/Popups/LoadingPopup/ProgressPanel").transform;
             Transform Parent_Loading_Progress = ProgressPanel.Find("Parent_Loading_Progress");

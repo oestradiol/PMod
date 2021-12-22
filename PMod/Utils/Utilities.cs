@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using HarmonyLib;
 using UnhollowerBaseLib;
-using UnhollowerBaseLib.Attributes;
 using UnhollowerRuntimeLib.XrefScans;
 using UnityEngine;
 using VRC;
@@ -21,14 +20,13 @@ namespace PMod.Utils
     {
         internal static VRCPlayer GetLocalVRCPlayer() => VRCPlayer.field_Internal_Static_VRCPlayer_0;
         internal static VRCPlayerApi GetLocalVRCPlayerApi() => Player.prop_Player_0.prop_VRCPlayerApi_0;
-        internal static Player GetPlayerFromID(string id) => (Player)DelegateMethods.PlayerFromID.Invoke(null, new object[] { id });
+        internal static Player GetPlayerFromID(string id) => PlayerManager.Method_Public_Static_Player_String_0(id);
         internal static void ChangeToAVByID(string id)
         {
-            var AviMenu = GameObject.Find("UserInterface/MenuContent/Screens/Avatar").GetComponent<PageAvatar>();
+            var AviMenu = Resources.FindObjectsOfTypeAll<PageAvatar>()[1];
             AviMenu.field_Public_SimpleAvatarPedestal_0.field_Internal_ApiAvatar_0 = new ApiAvatar { id = id };
             AviMenu.ChangeToSelectedAvatar();
         }
-
         internal enum WorldSDKVersion
         {
             None,
@@ -43,6 +41,12 @@ namespace PMod.Utils
             if (VRC_SceneDescriptor._instance.TryCast<VRC.SDK3.Components.VRCSceneDescriptor>() != null) return WorldSDKVersion.SDK3;
             return WorldSDKVersion.None;
         }
+
+        internal static void RiskyFuncAlert(string FuncName) => DelegateMethods.PopupV2(
+            FuncName,
+            "You have to first activate the mod on Melon Preferences menu! Be aware that this is a risky function.",
+            "Close",
+            new Action(() => { VRCUiManager.prop_VRCUiManager_0.HideScreen("POPUP"); }));
 
         internal static bool ContainsStr(MethodBase methodBase, string match)
         {
@@ -94,6 +98,88 @@ namespace PMod.Utils
             where TClass : class => typeof(TClass).GetMethod(patchName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)!
             .MethodHandle.GetFunctionPointer();
     }
+
+    internal static class NetworkEvents
+    {
+        internal static event Action<Player> OnPlayerJoinedAction;
+        internal static event Action<Player> OnPlayerLeftAction;
+        internal static event Action<ApiWorld, ApiWorldInstance> OnInstanceChangedAction;
+        private static void OnInstanceChangeMethod(ApiWorld __0, ApiWorldInstance __1) => OnInstanceChangedAction?.Invoke(__0, __1);
+        internal static void OnUiManagerInit()
+        {
+            //PatchMethods();
+            NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_0.
+                field_Private_HashSet_1_UnityAction_1_T_0.Add((Action<Player>)EventHandlerA);
+            NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_1.
+                field_Private_HashSet_1_UnityAction_1_T_0.Add((Action<Player>)EventHandlerA);
+            Main.HInstance.Patch(typeof(RoomManager).GetMethod(nameof(RoomManager.Method_Public_Static_Boolean_ApiWorld_ApiWorldInstance_String_Int32_0)), null,
+                new HarmonyMethod(typeof(NetworkEvents).GetMethod(nameof(OnInstanceChangeMethod), BindingFlags.NonPublic | BindingFlags.Static)));
+        }
+
+        private static bool SeenFire;
+        private static bool AFiredFirst;
+        private static void EventHandlerA(Player player)
+        {
+            if (!SeenFire)
+            {
+                AFiredFirst = true;
+                SeenFire = true;
+            }
+
+            (AFiredFirst ? OnPlayerJoinedAction : OnPlayerLeftAction)?.Invoke(player);
+        }
+        private static void EventHandlerB(Player player)
+        {
+            if (!SeenFire)
+            {
+                AFiredFirst = false;
+                SeenFire = true;
+            }
+                
+            (AFiredFirst ? OnPlayerLeftAction : OnPlayerJoinedAction)?.Invoke(player);
+        }
+
+        //// Needs change to which method it patches, because only works at first instance join for now.
+        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        //private delegate void PlayerActionDelegate(IntPtr thisPtr, IntPtr playerPtr, IntPtr nativeMInfo);
+        //private static readonly System.Collections.Generic.List<PlayerActionDelegate> dontGCDelegates = new();
+        //private unsafe static void PatchMethods()
+        //{
+        //    void ApplyPatch(MethodInfo mInfo, bool IsJoin)
+        //    {
+        //        PlayerActionDelegate tempMethod, originalMethod = null;
+        //        dontGCDelegates.Add(tempMethod = (thisPtr, playerPtr, nativeMInfo) =>
+        //        {   
+        //            var Player = UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<Player>(playerPtr);
+        //            (IsJoin ? OnPlayerJoinedAction : OnPlayerLeftAction)?.Invoke(Player);
+        //            originalMethod.Invoke(thisPtr, playerPtr, nativeMInfo);
+        //            Loader.PLogger.Msg("Called OnVRCPlayer" + (IsJoin ? "Join" : "Left") + $" for {Player.field_Private_APIUser_0.displayName}! MethodInfo: {mInfo.Name}.");
+        //        });
+        //        originalMethod = NativePatchUtils.Patch<PlayerActionDelegate>(mInfo, Marshal.GetFunctionPointerForDelegate(tempMethod));
+        //    }
+
+        //    var mIEnum = typeof(NetworkManager).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(
+        //        m => m.ReturnType == typeof(void) && m.GetParameters().FirstOrDefault()?.ParameterType == typeof(Player));
+        //    bool FirstIsJoin = XrefScanner.XrefScan(mIEnum.First()).Where(instance => instance.Type == XrefType.Global)
+        //            .Select(instance => instance.ReadAsObject()?.ToString()).Any(s => s == "OnPlayerJoined {0}");
+        //    ApplyPatch(mIEnum.First(), FirstIsJoin);
+        //    ApplyPatch(mIEnum.Last(), !FirstIsJoin);
+        //}
+    }
+
+    //Add this to OnApplicationStart!! ClassInjector.RegisterTypeInIl2Cpp<EnableDisableListener>();
+    //internal class EnableDisableListener : MonoBehaviour
+    //{
+    //    [method: HideFromIl2Cpp]
+    //    internal event Action OnEnabled;
+
+    //    [method: HideFromIl2Cpp]
+    //    internal event Action OnDisabled;
+
+    //    private void OnEnable() => OnEnabled?.Invoke();
+
+    //    private void OnDisable() => OnDisabled?.Invoke();
+    //}
 
     internal class OrbitItem
     {
@@ -189,103 +275,6 @@ namespace PMod.Utils
 
             IsFrozen = true;
             ModulesManager.frozenPlayersManager.NametagSet(this);
-        }
-    }
-
-    // The entire code from now on came from Knah (afaik), besides the part I commented.
-    public class EnableDisableListener : MonoBehaviour
-    {
-        public EnableDisableListener(IntPtr obj0) : base(obj0) { }
-
-        [method: HideFromIl2Cpp]
-        public event Action OnEnabled;
-
-        [method: HideFromIl2Cpp]
-        public event Action OnDisabled;
-
-        private void OnEnable() => OnEnabled?.Invoke();
-
-        private void OnDisable() => OnDisabled?.Invoke();
-    }
-
-    internal static class NetworkEvents
-    {
-        internal static event Action<Player> OnPlayerJoinedAction;
-        internal static event Action<Player> OnPlayerLeftAction;
-        internal static event Action<ApiWorld, ApiWorldInstance> OnInstanceChangedAction;
-
-        //// Needs change to which method it patches, because only works at first instance join for now.
-        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        //public delegate void PlayerActionDelegate(IntPtr thisPtr, IntPtr playerPtr, IntPtr nativeMInfo);
-        //private static readonly System.Collections.Generic.List<PlayerActionDelegate> dontGCDelegates = new();
-        //private unsafe static void PatchMethods()
-        //{
-        //    var mIEnum = typeof(NetworkManager).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(
-        //        m => m.IsPublic && m.ReturnType == typeof(void) &&
-        //        m.GetParameters().FirstOrDefault()?.ParameterType == typeof(Player));
-        //    foreach (var mInfo in mIEnum)
-        //    {
-        //        var stringList = XrefScanner.XrefScan(mInfo)
-        //            .Where(instance => instance.Type == XrefType.Global)
-        //            .Select(instance => instance.ReadAsObject()?.ToString());
-        //        if (stringList.Any(s => s == "OnPlayerJoined {0}"))
-        //        {
-        //            PlayerActionDelegate tempMethod, originalMethod = null;
-        //            dontGCDelegates.Add(tempMethod = (thisPtr, playerPtr, nativeMInfo) =>
-        //            {
-        //                OnPlayerJoinedAction?.Invoke(UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<Player>(playerPtr));
-        //                originalMethod.Invoke(thisPtr, playerPtr, nativeMInfo);
-        //            });
-        //            originalMethod = NativePatchUtils.Patch<PlayerActionDelegate>(mInfo, Marshal.GetFunctionPointerForDelegate(tempMethod));
-        //        }
-        //        else if (stringList.Any(s => s == "OnPlayerLeft {0}"))
-        //        {
-        //            PlayerActionDelegate tempMethod, originalMethod = null;
-        //            dontGCDelegates.Add(tempMethod = (thisPtr, playerPtr, nativeMInfo) =>
-        //            {
-        //                OnPlayerLeftAction?.Invoke(UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<Player>(playerPtr));
-        //                originalMethod.Invoke(thisPtr, playerPtr, nativeMInfo);
-        //            });
-        //            originalMethod = NativePatchUtils.Patch<PlayerActionDelegate>(mInfo, Marshal.GetFunctionPointerForDelegate(tempMethod));
-        //        }
-        //    }
-        //}
-
-        private static bool SeenFire;
-        private static bool AFiredFirst;
-
-        private static void EventHandlerA(Player player)
-        {
-            if (!SeenFire)
-            {
-                AFiredFirst = true;
-                SeenFire = true;
-            }
-
-            (AFiredFirst ? OnPlayerJoinedAction : OnPlayerLeftAction)?.Invoke(player);
-        }
-
-        private static void EventHandlerB(Player player)
-        {
-            if (!SeenFire)
-            {
-                AFiredFirst = false;
-                SeenFire = true;
-            }
-
-            (AFiredFirst ? OnPlayerLeftAction : OnPlayerJoinedAction)?.Invoke(player);
-        }
-
-        private static void OnInstanceChangeMethod(ApiWorld __0, ApiWorldInstance __1) => OnInstanceChangedAction?.Invoke(__0, __1);
-        private static void AddDelegate(VRCEventDelegate<Player> field, Action<Player> eventHandler) => field.field_Private_HashSet_1_UnityAction_1_T_0.Add(eventHandler);
-
-        internal static void OnUiManagerInit()
-        {
-            //PatchMethods();
-            AddDelegate(NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_0, EventHandlerA);
-            AddDelegate(NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_1, EventHandlerB);
-            Main.HInstance.Patch(typeof(RoomManager).GetMethod("Method_Public_Static_Boolean_ApiWorld_ApiWorldInstance_String_Int32_0"), null,
-                new HarmonyMethod(typeof(NetworkEvents).GetMethod(nameof(OnInstanceChangeMethod), BindingFlags.NonPublic | BindingFlags.Static)));
         }
     }
 }

@@ -13,6 +13,13 @@ namespace PMod.Modules
     {
         internal Dictionary<string, Timer> EntryDict = new();
 
+        internal FrozenPlayersManager()
+        {
+            useOnPlayerJoined = true;
+            useOnPlayerLeft = true;
+            RegisterSubscriptions();
+        }
+
         internal override void OnPlayerJoined(Player player)
         {
             var id = player.prop_APIUser_0.id;
@@ -27,23 +34,13 @@ namespace PMod.Modules
                 TM.text = "Frozen";
                 TM.color = Color.cyan;
                 if (MelonHandler.Mods.Any(m => m.Info.Name.Contains("Mint")))
-                    try { timer.text.transform.gameObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, 30); } catch { }
+                    timer.text.transform.gameObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, 30);
                 timer.text.SetActive(false);
             }
         }
 
         internal override void OnPlayerLeft(Player player) => EntryDict.Remove(player.prop_APIUser_0.id);
 
-        internal void NametagSet(Timer entry)
-        {
-            try
-            {
-                if (entry.IsFrozen)
-                    entry.text?.SetActive(true);
-                else
-                    entry.text?.SetActive(false);
-            }
-            catch { }
-        }
+        internal void NametagSet(Timer entry) { try { entry.text?.SetActive(entry.IsFrozen); } catch { } }
     }
 }

@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Il2CppSystem.Collections.Generic;
 using UnhollowerBaseLib;
 using MelonLoader;
-using Photon.Pun;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
-using VRC;
+using UnityEngine.UI;
 using VRC.SDKBase;
 using PMod.Loader;
 
@@ -16,26 +15,32 @@ namespace PMod.Utils
 {
     internal static class DelegateMethods
     {
-        internal static void PopupV2(string title, string innertxt, string buttontxt, Il2CppSystem.Action buttonOk, Il2CppSystem.Action<VRCUiPopup> action = null) =>
-            GetPopupV2Delegate(title, innertxt, buttontxt, buttonOk, action);
-        private delegate void PopupV2Delegate(string title, string innertxt, string buttontxt, Il2CppSystem.Action buttonOk, Il2CppSystem.Action<VRCUiPopup> action = null);
+        internal static void PopupV2(string title, string body, string submitButtonText, Il2CppSystem.Action submitButtonAction) => GetPopupV2Delegate(title, body, submitButtonText, submitButtonAction);
+        private delegate void PopupV2Delegate(string title, string body, string submitButtonText, Il2CppSystem.Action submitButtonAction, Il2CppSystem.Action<VRCUiPopup> additionalSetup = null);
         private static PopupV2Delegate popupV2Delegate;
         private static PopupV2Delegate GetPopupV2Delegate => 
             popupV2Delegate ??= (PopupV2Delegate)Delegate.CreateDelegate(typeof(PopupV2Delegate), 
-                    VRCUiPopupManager.prop_VRCUiPopupManager_0, 
-                    typeof(VRCUiPopupManager).GetMethods()
-                        .First(methodBase => methodBase.Name.StartsWith("Method_Public_Void_String_String_String_Action_Action_1_VRCUiPopup_") &&
-                        !methodBase.Name.Contains("PDM") &&
-                        Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/StandardPopupV2") &&
-                        Utilities.WasUsedBy(methodBase, "OpenSaveSearchPopup")));
+                VRCUiPopupManager.prop_VRCUiPopupManager_0, 
+                typeof(VRCUiPopupManager).GetMethods()
+                    .First(methodBase => methodBase.Name.StartsWith("Method_Public_Void_String_String_String_Action_Action_1_VRCUiPopup_") &&
+                    !methodBase.Name.Contains("PDM") &&
+                    Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/StandardPopupV2") &&
+                    Utilities.WasUsedBy(methodBase, "OpenSaveSearchPopup")));
 
-
-
-        private static MethodInfo playerFromID;
-        internal static MethodInfo PlayerFromID =>
-                playerFromID ??= typeof(PlayerManager).GetMethods()
-                    .Where(methodBase => methodBase.Name.StartsWith("Method_Public_Static_Player_String_") && !methodBase.Name.Contains("PDM"))
-                    .OrderBy(method => UnhollowerSupport.GetIl2CppMethodCallerCount(method)).Last();
+        internal static void InputPopup(string title, string submitButtonText, Il2CppSystem.Action<string, List<UnityEngine.KeyCode>, Text> submitButtonAction, string placeholderText = "Enter text....", 
+            bool useNumericKeypad = false, Il2CppSystem.Action cancelButtonAction = null, string body = null, InputField.InputType inputType = InputField.InputType.Standard) => // Extra shit
+                GetInputPopupDelegate(title, body, inputType, useNumericKeypad, submitButtonText, submitButtonAction, cancelButtonAction, placeholderText);
+        private delegate void InputPopupDelegate(string title, string body, InputField.InputType inputType, bool useNumericKeypad, string submitButtonText, Il2CppSystem.Action<string, List<UnityEngine.KeyCode>, Text> submitButtonAction, 
+            Il2CppSystem.Action cancelButtonAction, string placeholderText = "Enter text....", bool hidePopupOnSubmit = true, Il2CppSystem.Action<VRCUiPopup> additionalSetup = null, bool param_11 = false, int param_12 = 0);
+        private static InputPopupDelegate inputPopupDelegate;
+        private static InputPopupDelegate GetInputPopupDelegate =>
+            inputPopupDelegate ??= (InputPopupDelegate)Delegate.CreateDelegate(
+                typeof(InputPopupDelegate),
+                VRCUiPopupManager.prop_VRCUiPopupManager_0,
+                typeof(VRCUiPopupManager).GetMethods().First(methodBase =>
+                    methodBase.Name.StartsWith("Method_Public_Void_String_String_InputType_Boolean_String_Action_3_String_List_1_KeyCode_Text_Action_String_Boolean_Action_1_VRCUiPopup_Boolean_Int32_") &&
+                    !methodBase.Name.Contains("PDM") &&
+                    Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/InputPopup")));
     }
 
     internal class NativePatches
@@ -48,7 +53,7 @@ namespace PMod.Utils
         private delegate void LocalToGlobalSetupDelegate(IntPtr instancePtr, IntPtr eventPtr, VRC_EventHandler.VrcBroadcastType broadcast, int instigatorId, float fastForward, IntPtr nativeMethodInfo);
         private static RaiseEventDelegate raiseEventDelegate;
         private static LocalToGlobalSetupDelegate localToGlobalSetupDelegate;
-        private static readonly List<OnPlayerNetDecodeDelegate> dontGCDelegates = new();
+        private static readonly System.Collections.Generic.List<OnPlayerNetDecodeDelegate> dontGCDelegates = new();
         internal unsafe static void OnApplicationStart()
         {
             raiseEventDelegate = NativePatchUtils.Patch<RaiseEventDelegate>(typeof(LoadBalancingClient)
@@ -148,7 +153,7 @@ namespace PMod.Utils
 
                 Timer entry = null;
                 try { entry = ModulesManager.frozenPlayersManager.EntryDict[playerNet.prop_Player_0.prop_APIUser_0.id]; } catch { };
-                if (entry != null) entry.RestartTimer();
+                entry?.RestartTimer();
             }
             catch (Exception e)
             {

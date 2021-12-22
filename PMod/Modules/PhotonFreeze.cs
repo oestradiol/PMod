@@ -3,9 +3,9 @@ using UnityEngine;
 using MelonLoader;
 using Photon.Pun;
 using VRC;
+using VRC.Core;
 using UIExpansionKit.API;
 using Object = UnityEngine.Object;
-//using FlatNetworkBufferSerializer = MonoBehaviour2PrivateHa1ObVeObAcVeSeAc1Unique;
 
 namespace PMod.Modules
 {
@@ -23,6 +23,10 @@ namespace PMod.Modules
         {
             MelonPreferences.CreateCategory("PhotonFreeze", "PM - Photon Freeze");
             IsOn = MelonPreferences.CreateEntry("PhotonFreeze", "IsOn", false, "Activate Mod? This is a risky function.");
+            useOnPlayerJoined = true;
+            useOnUpdate = true;
+            useOnInstanceChanged = true;
+            RegisterSubscriptions();
         }
 
         internal override void OnPlayerJoined(Player player) 
@@ -35,6 +39,7 @@ namespace PMod.Modules
         internal bool IsMaxD = false;
         internal override void OnUpdate()
         {
+            if (!IsOn.Value) return;
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L))
             {
                 var temp = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject.transform;
@@ -53,6 +58,8 @@ namespace PMod.Modules
                 FreezeMenu.Hide();
             }
         }
+
+        internal override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => IsFreeze = false;
 
         internal void ShowFreezeMenu()
         {

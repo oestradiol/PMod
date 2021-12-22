@@ -17,6 +17,7 @@ namespace PMod.Modules
         {
             MelonPreferences.CreateCategory("LocalToGlobal", "PM - Local To Global");
             IsOn = MelonPreferences.CreateEntry("LocalToGlobal", "IsOn", false, "Activate Mod? This is a risky function.");
+            RegisterSubscriptions();
         }
 
         internal void ShowTriggersMenu()
@@ -33,7 +34,7 @@ namespace PMod.Modules
             else if (!IsOn.Value)
             {
                 btnName += "Off";
-                action = () => Main.RiskyFuncAlert("LocalToGlobal");
+                action = () => Utils.Utilities.RiskyFuncAlert("LocalToGlobal");
             }
             else
             {

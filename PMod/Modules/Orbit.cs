@@ -57,6 +57,12 @@ namespace PMod.Modules
             OrbitMenu.AddSimpleButton("Spherical Orbit", () => SelectOrbit("Spherical"));
             OrbitMenu.AddSimpleButton("Cylindrical Orbit", () => SelectOrbit("Cylindrical"));
             OnPreferencesSaved();
+            useOnPreferencesSaved = true;
+            useOnUiManagerInit = true;
+            useOnUpdate = true;
+            useOnInstanceChanged = true;
+            useOnPlayerLeft = true;
+            RegisterSubscriptions();
         }
 
         internal override void OnPreferencesSaved()
@@ -65,7 +71,7 @@ namespace PMod.Modules
             rotationy = Quaternion.Euler(0, roty.Value, 0);
         }
 
-        internal override void OnUiManagerInit() => NetworkEvents.OnInstanceChangedAction += OnInstanceChange;
+        internal override void OnUiManagerInit() => NetworkEvents.OnInstanceChangedAction += OnInstanceChanged;
         
         internal override void OnUpdate()
         {
@@ -90,7 +96,7 @@ namespace PMod.Modules
             Timer += Time.deltaTime;
         }
 
-        internal override void OnInstanceChange(ApiWorld world, ApiWorldInstance instance) => StopOrbit();
+        internal override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => StopOrbit();
 
         internal override void OnPlayerLeft(Player player) { if (CurrentPlayer == player) StopOrbit(); }
 
