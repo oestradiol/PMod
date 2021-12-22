@@ -1,5 +1,4 @@
-﻿using MelonLoader;
-using System;
+﻿using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Linq;
@@ -8,6 +7,7 @@ using System.Runtime.InteropServices;
 using HarmonyLib;
 using UnhollowerBaseLib;
 using UnhollowerRuntimeLib.XrefScans;
+using MelonLoader;
 using UnityEngine;
 using VRC;
 using VRC.Core;
@@ -111,7 +111,7 @@ namespace PMod.Utils
             NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_0.
                 field_Private_HashSet_1_UnityAction_1_T_0.Add((Action<Player>)EventHandlerA);
             NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_1.
-                field_Private_HashSet_1_UnityAction_1_T_0.Add((Action<Player>)EventHandlerA);
+                field_Private_HashSet_1_UnityAction_1_T_0.Add((Action<Player>)EventHandlerB);
             Main.HInstance.Patch(typeof(RoomManager).GetMethod(nameof(RoomManager.Method_Public_Static_Boolean_ApiWorld_ApiWorldInstance_String_Int32_0)), null,
                 new HarmonyMethod(typeof(NetworkEvents).GetMethod(nameof(OnInstanceChangeMethod), BindingFlags.NonPublic | BindingFlags.Static)));
         }

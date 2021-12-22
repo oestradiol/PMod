@@ -5,10 +5,10 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using MelonLoader;
 using UnityEngine;
 using VRC.Core;
-using System.Text.RegularExpressions;
 
 namespace PMod.Modules
 {

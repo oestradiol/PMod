@@ -1,7 +1,5 @@
-﻿using PMod.Loader;
-using PMod.Modules;
+﻿using PMod.Modules;
 using System;
-using UnityEngine;
 using VRC;
 using VRC.Core;
 
@@ -10,7 +8,6 @@ namespace PMod
 	internal abstract class ModuleBase
 	{
 		internal bool useOnUiManagerInit, useOnPreferencesSaved, useOnSceneWasLoaded, useOnUpdate, useOnPlayerJoined, useOnPlayerLeft, useOnInstanceChanged;
-
 		internal void RegisterSubscriptions()
         {
 			if (useOnUiManagerInit) ModulesManager.OnUiManagerInit += OnUiManagerInit;

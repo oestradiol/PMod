@@ -4,10 +4,10 @@ using System.Net;
 using System.Linq;
 using System.Reflection;
 using System.Collections;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using MelonLoader;
-using System.Threading.Tasks;
 
 [assembly: AssemblyTitle(PMod.Loader.LInfo.Name)]
 [assembly: AssemblyCopyright("Created by " + PMod.Loader.LInfo.Author)]
