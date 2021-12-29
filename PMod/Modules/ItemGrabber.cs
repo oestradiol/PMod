@@ -56,13 +56,17 @@ namespace PMod.Modules
             if (Type == "Patch")
             {
                 SelectionMenu.AddSimpleButton("Patch All", () => PatchAll());
-                foreach (var Pickup in Pickups) SelectionMenu.AddSimpleButton(Pickup.name, () => Patch(Pickup));
+                foreach (var Pickup in Pickups) 
+                    SelectionMenu.AddSimpleButton(Pickup.name, () => Patch(Pickup));
 
             }
             else if (Type == "Unpatch")
             {
                 SelectionMenu.AddSimpleButton("Unpatch All", () => UnpatchAll());
-                if (PreviousStates.Count != 0) foreach (var Pickup in PreviousStates.Keys) SelectionMenu.AddSimpleButton(Pickup.name, () => { Unpatch(Pickup); Select("Unpatch"); });
+                if (PreviousStates.Count != 0) 
+                    foreach (var Pickup in PreviousStates.Keys) 
+                        if (Pickup != null)
+                            SelectionMenu.AddSimpleButton(Pickup.name, () => { Unpatch(Pickup); Select("Unpatch"); });
             }
             else
             {
