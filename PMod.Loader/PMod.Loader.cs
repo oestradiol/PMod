@@ -43,42 +43,17 @@ namespace PMod.Loader
 
     public class PModLoader : MelonMod
     {
-        private enum ActionCall
-        {
-            None,
-            OnApplicationStart,
-            OnApplicationQuit,
-            VRChat_OnUiManagerInit,
-            OnUpdate,
-            OnLateUpdate,
-            OnFixedUpdate,
-            OnGUI,
-            OnPreferencesLoaded,
-            OnPreferencesSaved,
-            OnSceneWasLoaded,
-            OnSceneWasInitialized
-        }
         private static Delegate[] ActionCalls = new Delegate[12];
-        public override void OnApplicationQuit() => 
-            ((Action)ActionCalls[(int)ActionCall.OnApplicationQuit])?.Invoke();
-        public static void VRChat_OnUiManagerInit() => 
-            ((Action)ActionCalls[(int)ActionCall.VRChat_OnUiManagerInit])?.Invoke();
-        public override void OnUpdate() =>
-            ((Action)ActionCalls[(int)ActionCall.OnUpdate])?.Invoke();
-        public override void OnLateUpdate() => 
-            ((Action)ActionCalls[(int)ActionCall.OnLateUpdate])?.Invoke();
-        public override void OnFixedUpdate() => 
-            ((Action)ActionCalls[(int)ActionCall.OnFixedUpdate])?.Invoke();
-        public override void OnGUI() => 
-            ((Action)ActionCalls[(int)ActionCall.OnGUI])?.Invoke();
-        public override void OnPreferencesLoaded() => 
-            ((Action)ActionCalls[(int)ActionCall.OnPreferencesLoaded])?.Invoke();
-        public override void OnPreferencesSaved() => 
-            ((Action)ActionCalls[(int)ActionCall.OnPreferencesSaved])?.Invoke();
-        public override void OnSceneWasLoaded(int buildIndex, string sceneName) => 
-            ((Action<int, string>)ActionCalls[(int)ActionCall.OnSceneWasLoaded])?.Invoke(buildIndex, sceneName);
-        public override void OnSceneWasInitialized(int buildIndex, string sceneName) => 
-            ((Action<int, string>)ActionCalls[(int)ActionCall.OnSceneWasInitialized])?.Invoke(buildIndex, sceneName);
+        public override void OnApplicationQuit() => ((Action)ActionCalls[2])?.Invoke();
+        public static void VRChat_OnUiManagerInit() => ((Action)ActionCalls[3])?.Invoke();
+        public override void OnUpdate() => ((Action)ActionCalls[4])?.Invoke();
+        public override void OnLateUpdate() => ((Action)ActionCalls[5])?.Invoke();
+        public override void OnFixedUpdate() => ((Action)ActionCalls[6])?.Invoke();
+        public override void OnGUI() => ((Action)ActionCalls[7])?.Invoke();
+        public override void OnPreferencesLoaded() => ((Action)ActionCalls[8])?.Invoke();
+        public override void OnPreferencesSaved() => ((Action)ActionCalls[9])?.Invoke();
+        public override void OnSceneWasLoaded(int buildIndex, string sceneName) => ((Action<int, string>)ActionCalls[10])?.Invoke(buildIndex, sceneName);
+        public override void OnSceneWasInitialized(int buildIndex, string sceneName) => ((Action<int, string>)ActionCalls[11])?.Invoke(buildIndex, sceneName);
 
         private static void WaitForUiInit()
         {
@@ -153,7 +128,7 @@ namespace PMod.Loader
             else MelonLogger.Warning("All attempts to load the assembly failed. PMod won't load.");
 
             WaitForUiInit();
-            ((Action)ActionCalls[(int)ActionCall.OnApplicationStart])?.Invoke();
+            ((Action)ActionCalls[1])?.Invoke(); // ActionCall OnApplicationStart
         }
 
         private static void InitializeAssembly(byte[] assembly)
@@ -174,27 +149,28 @@ namespace PMod.Loader
                 var Parameters = m.GetParameters();
                 if (Parameters.Length == 0)
                 {
-                    ActionCalls[(int)(m.Name switch {
-                        nameof(OnApplicationStart) => ActionCall.OnApplicationStart,
-                        nameof(OnApplicationQuit) => ActionCall.OnApplicationQuit,
-                        nameof(VRChat_OnUiManagerInit)  => ActionCall.VRChat_OnUiManagerInit,
-                        nameof(OnUpdate) => ActionCall.OnUpdate,
-                        nameof(OnLateUpdate) => ActionCall.OnLateUpdate,
-                        nameof(OnFixedUpdate) => ActionCall.OnFixedUpdate,
-                        nameof(OnGUI) => ActionCall.OnGUI,
-                        nameof(OnPreferencesLoaded) => ActionCall.OnPreferencesLoaded,
-                        nameof(OnPreferencesSaved) => ActionCall.OnPreferencesSaved,
-                        _ => ActionCall.None
-                    })] = m.CreateDelegate<Action>();
+                    ActionCalls[m.Name switch
+                    {
+                        nameof(OnApplicationStart) => 1,
+                        nameof(OnApplicationQuit) => 2,
+                        nameof(VRChat_OnUiManagerInit) => 3,
+                        nameof(OnUpdate) => 4,
+                        nameof(OnLateUpdate) => 5,
+                        nameof(OnFixedUpdate) => 6,
+                        nameof(OnGUI) => 7,
+                        nameof(OnPreferencesLoaded) => 8,
+                        nameof(OnPreferencesSaved) => 9,
+                        _ => 0
+                    }] = m.CreateDelegate<Action>();
                 }
                 else if ((from p in Parameters select p.ParameterType).SequenceEqual(new[] { typeof(int), typeof(string) }))
                 {
-                    ActionCalls[(int)(m.Name switch
+                    ActionCalls[m.Name switch
                     {
-                        nameof(OnSceneWasLoaded) => ActionCall.OnSceneWasLoaded,
-                        nameof(OnSceneWasInitialized) => ActionCall.OnSceneWasInitialized,
-                        _ => ActionCall.None
-                    })] = m.CreateDelegate<Action<int, string>>();
+                        nameof(OnSceneWasLoaded) => 10,
+                        nameof(OnSceneWasInitialized) => 11,
+                        _ => 0
+                    }] = m.CreateDelegate<Action<int, string>>();
                 }
             }
         }
