@@ -31,7 +31,7 @@ namespace PMod.Modules
 
         internal override void OnPlayerJoined(Player player) 
         { 
-            if (player.prop_APIUser_0.id == Player.prop_Player_0.prop_APIUser_0.id) 
+            if (player.prop_APIUser_0.id == Utilities.GetLocalAPIUser().id) 
                 PhotonID = player.gameObject.GetComponent<PhotonView>().viewIdField;
         }
 
@@ -42,7 +42,7 @@ namespace PMod.Modules
             if (!IsOn.Value) return;
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L))
             {
-                var temp = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject.transform;
+                var temp = Utilities.GetLocalVRCPlayer().gameObject.transform;
                 IsMaxD = !IsMaxD;
                 if (IsMaxD)
                 {

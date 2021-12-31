@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PMod.Utils;
+using System;
 using UnityEngine;
 using MelonLoader;
 
@@ -21,9 +22,9 @@ namespace PMod.Modules
         {
             if (!IsOn.Value) return;
             if (Input.GetKeyDown(KeyCode.Mouse4) &&
-                    VRCPlayer.field_Internal_Static_VRCPlayer_0 != null &&
+                    Utilities.GetLocalVRCPlayer() != null &&
                     Physics.Raycast(CameraComponent.ScreenPointToRay(Input.mousePosition), out var hitInfo))
-                VRCPlayer.field_Internal_Static_VRCPlayer_0.transform.position = hitInfo.point;
+                Utilities.GetLocalVRCPlayer().transform.position = hitInfo.point;
         }
 
         // Gets the center of the eye (camera)

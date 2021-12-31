@@ -98,7 +98,7 @@ namespace PMod
         //            ParameterBytes = Networking.EncodeParameters(new Il2CppSystem.Object[] {raw})
         //        },
         //        VRC_EventHandler.VrcBroadcastType.AlwaysUnbuffered, 
-        //        VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject, 
+        //        Utilities.GetLocalVRCPlayer().gameObject, 
         //        0f);
         //}
     }

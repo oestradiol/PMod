@@ -12,17 +12,16 @@ using VRC.Core;
 
 namespace PMod.Modules
 {
-    internal class UserInteractUtils : ModuleBase
+    internal class CopyAsset : ModuleBase
     {
         private MelonPreferences_Entry<string> ToPath;
 
-        internal static VRC.UI.Elements.Menus.SelectedUserMenuQM selectedUserMenuQM;
-        internal static UnityEngine.UI.Button CopyAssetButton;
+        internal VRC.UI.Elements.Menus.SelectedUserMenuQM selectedUserMenuQM;
 
-        internal UserInteractUtils()
+        internal CopyAsset()
         {
-            MelonPreferences.CreateCategory("UserInteractUtils", "PM - User Interact Utils");
-            ToPath = MelonPreferences.CreateEntry("UserInteractUtils", "ToPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
+            MelonPreferences.CreateCategory("CopyAsset", "PM - Copy Asset");
+            ToPath = MelonPreferences.CreateEntry("CopyAsset", "ToPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
             useOnUiManagerInit = true;
             RegisterSubscriptions();
         }
@@ -31,16 +30,16 @@ namespace PMod.Modules
         {
             selectedUserMenuQM = Resources.FindObjectsOfTypeAll<VRC.UI.Elements.Menus.SelectedUserMenuQM>()[1];
             var AddToFavoritesButton = selectedUserMenuQM.transform.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_AvatarActions/Button_AddToFavorites");
-            CopyAssetButton = UnityEngine.Object.Instantiate(AddToFavoritesButton, AddToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<UnityEngine.UI.Button>();
+            var CopyAssetButton = UnityEngine.Object.Instantiate(AddToFavoritesButton, AddToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<UnityEngine.UI.Button>();
             UnityEngine.Object.DestroyImmediate(CopyAssetButton.transform.Find("Favorite Disabled Button").gameObject);
             CopyAssetButton.onClick = new();
-            CopyAssetButton.onClick.AddListener(new Action(() => CopyAsset()));
+            CopyAssetButton.onClick.AddListener(new Action(() => _CopyAsset()));
             CopyAssetButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Copy Asset";
             CopyAssetButton.GetComponent<VRC.UI.Elements.Tooltips.UiTooltip>().field_Public_String_0 = "Copies the asset file to the destined folder.";
             CopyAssetButton.name = "Button_CopyAssetButton";
         }
 
-        private void CopyAsset()
+        private void _CopyAsset()
         {
             ApiAvatar avatar = Utilities.GetPlayerFromID(selectedUserMenuQM.field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
             if (!Directory.Exists(ToPath.Value)) Directory.CreateDirectory(ToPath.Value);
