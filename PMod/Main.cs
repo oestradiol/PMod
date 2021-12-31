@@ -91,7 +91,7 @@ namespace PMod
         //            EventType = VRC_EventHandler.VrcEventType.SendRPC,
         //            Name = "SendRPC",
         //            ParameterObject = handler.gameObject,
-        //            ParameterInt = Player.prop_Player_0.field_Private_VRCPlayerApi_0.playerId,
+        //            ParameterInt = Utilities.GetLocalVRCPlayerApi().playerId,
         //            ParameterFloat = 0f,
         //            ParameterString = "UdonSyncRunProgramAsRPC",
         //            ParameterBoolOp = VRC_EventHandler.VrcBooleanOp.Unused,

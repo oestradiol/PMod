@@ -32,7 +32,7 @@ namespace PMod.Utils
         internal static Player GetPlayerFromID(string id) => PlayerManager.Method_Public_Static_Player_String_0(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Player GetPlayerFromPhotonID(int id) => DelegateMethods.GetPlayerFromPhotonIDMethod(id);
+        internal static Player GetPlayerFromPhotonID(int id) => DelegateMethods.GetPlayerFromPhotonID(id);
 
         internal static void ChangeToAVByID(string id)
         {
@@ -117,7 +117,7 @@ namespace PMod.Utils
             .CreateDelegate<InputPopupDelegate>(VRCUiPopupManager.prop_VRCUiPopupManager_0))(title, body, inputType, useNumericKeypad, submitButtonText, submitButtonAction, cancelButtonAction, placeholderText);
 
         private static Func<int, Player> playerFromPhotonIDMethod;
-        internal static Player GetPlayerFromPhotonIDMethod(int id) =>
+        internal static Player GetPlayerFromPhotonID(int id) =>
             (playerFromPhotonIDMethod ??= typeof(PlayerManager)
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Where(mi => mi.Name.Contains("Method_Public_Static_Player_Int32_"))

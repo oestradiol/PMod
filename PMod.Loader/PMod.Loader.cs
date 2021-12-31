@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using MelonLoader;
+using MonoMod.Utils;
 
 [assembly: AssemblyTitle(PMod.Loader.LInfo.Name)]
 [assembly: AssemblyCopyright("Created by " + PMod.Loader.LInfo.Author)]
@@ -25,14 +26,14 @@ namespace PMod.Loader
         // Loader info
         public const string Name = "PMod.Loader";
         public const string Author = "Davi";
-        public const string Version = "1.0.1";
+        public const string Version = "1.0.2";
 
         // PMod info
         internal const string ModName = "PMod";
         internal static string MainLink = "https://davi.codes/vrchat/";
     }
 
-    public class VersionCheckResponse
+    internal class VersionCheckResponse
     {
         public string Result { get; set; }
         public string Latest { get; set; }
@@ -83,12 +84,12 @@ namespace PMod.Loader
         public override void OnApplicationStart()
         {
             MelonLogger.Msg(ConsoleColor.Blue, $"Loader's current version: {LInfo.Version}. Checking for updates...");
-            
+
             Task.Run(async () =>
             {
                 try
                 {
-                    VersionCheckResponse response = 
+                    VersionCheckResponse response =
                         JsonConvert.DeserializeObject<VersionCheckResponse>(
                             await new WebClient { Headers = { [HttpRequestHeader.ContentType] = "application/json" } }
                                 .UploadStringTaskAsync(new Uri(LInfo.MainLink + "api"), "{\"name\":\"" + LInfo.Name + "\",\"version\":\"" + LInfo.Version + "\"}"));
@@ -107,9 +108,8 @@ namespace PMod.Loader
                             MelonLogger.Msg(ConsoleColor.DarkRed, $"Welcome, Savitar. What would you want to do today?");
                             break;
                     }
-                } 
-                catch (Exception e) 
-                { MelonLogger.Warning("Failed to check and download latest version!\n" + e.ToString()); }
+                }
+                catch (Exception e) { MelonLogger.Warning("Failed to check and download latest version!\n" + e.ToString()); }
             });
 
             byte[] bytes = null;
@@ -117,9 +117,9 @@ namespace PMod.Loader
             {
                 MelonLogger.Msg(ConsoleColor.Blue, "Attempting to load PMod latest version...");
                 bytes = new WebClient().DownloadData(LInfo.MainLink + $"{LInfo.ModName}.dll");
-            } catch { }
-            if (bytes == null)
-                MelonLogger.Error($"Failed to download {LInfo.ModName} from {LInfo.MainLink + $"{LInfo.ModName}.dll"}!");
+            }
+            catch { }
+            if (bytes == null) MelonLogger.Error($"Failed to download {LInfo.ModName} from {LInfo.MainLink + $"{LInfo.ModName}.dll"}!");
 
 #if DEBUG
             MelonLogger.Warning("This Assembly was built in Debug Mode! Forcing to load from VRChat main folder.");
@@ -147,58 +147,53 @@ namespace PMod.Loader
                 IEnumerable<Type> types;
                 try { types = Assembly.Load(assembly)?.GetTypes(); }
                 catch (ReflectionTypeLoadException e) { types = e.Types.Where(t => t != null); }
-                methods = types.FirstOrDefault(type => type.Name == "Main")?.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                methods = types?.FirstOrDefault(type => type.Name == "Main")?.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+                if (methods == null) throw new NullReferenceException("Couldn't find Main class. Assembly won't load.");
             }
-            catch (Exception e)
-            {
-                MelonLogger.Error($"Failed to load Assembly! {e}");
-                return;
-            }
-            if (methods == null)
-            {
-                MelonLogger.Error($"Couldn't find Main class. Assembly won't load.");
-                return;
-            }
+            catch (Exception e) { MelonLogger.Error($"Failed to load Assembly! {e}"); return; }
 
             foreach (var m in methods)
             {
-                var parameters = m.GetParameters();
-                switch (m.Name)
-                {
-                    case nameof(OnApplicationStart) when parameters.Length == 0:
-                        _onApplicationStart += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(OnApplicationQuit) when parameters.Length == 0:
-                        _onApplicationQuit += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(OnSceneWasLoaded) when parameters.Length == 2 && parameters[0].ParameterType == typeof(int) && parameters[1].ParameterType == typeof(string):
-                        _onSceneWasLoaded += (Action<int, string>)Delegate.CreateDelegate(typeof(Action<int, string>), m);
-                        break;
-                    case nameof(OnSceneWasInitialized) when parameters.Length == 2 && parameters[0].ParameterType == typeof(int) && parameters[1].ParameterType == typeof(string):
-                        _onSceneWasInitialized += (Action<int, string>)Delegate.CreateDelegate(typeof(Action<int, string>), m);
-                        break;
-                    case nameof(OnUpdate) when parameters.Length == 0:
-                        _onUpdate += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(VRChat_OnUiManagerInit) when parameters.Length == 0:
-                        _onUiManagerInit += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(OnGUI) when parameters.Length == 0:
-                        _onGUI += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(OnLateUpdate) when parameters.Length == 0:
-                        _onLateUpdate += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(OnFixedUpdate) when parameters.Length == 0:
-                        _onFixedUpdate += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(OnPreferencesLoaded) when parameters.Length == 0:
-                        _onPreferencesLoaded += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                    case nameof(OnPreferencesSaved) when parameters.Length == 0:
-                        _onPreferencesSaved += (Action)Delegate.CreateDelegate(typeof(Action), m);
-                        break;
-                }
+                var Parameters = m.GetParameters();
+                if (Parameters.Length == 0) switch (m.Name)
+                    {
+                        case nameof(OnApplicationStart):
+                            _onApplicationStart += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(OnApplicationQuit):
+                            _onApplicationQuit += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(OnUpdate):
+                            _onUpdate += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(VRChat_OnUiManagerInit):
+                            _onUiManagerInit += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(OnGUI):
+                            _onGUI += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(OnLateUpdate):
+                            _onLateUpdate += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(OnFixedUpdate):
+                            _onFixedUpdate += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(OnPreferencesLoaded):
+                            _onPreferencesLoaded += m.CreateDelegate<Action>();
+                            break;
+                        case nameof(OnPreferencesSaved):
+                            _onPreferencesSaved += m.CreateDelegate<Action>();
+                            break;
+                    }
+                else if ((from p in Parameters select p.ParameterType).SequenceEqual(new[] { typeof(int), typeof(string) })) switch (m.Name)
+                    {
+                        case nameof(OnSceneWasLoaded):
+                            _onSceneWasLoaded += m.CreateDelegate<Action<int, string>>();
+                            break;
+                        case nameof(OnSceneWasInitialized):
+                            _onSceneWasInitialized += m.CreateDelegate<Action<int, string>>();
+                            break;
+                    }
             }
         }
     }
