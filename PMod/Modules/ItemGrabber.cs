@@ -14,22 +14,22 @@ namespace PMod.Modules
 {
     internal class ItemGrabber : ModuleBase
     {
-        private ICustomShowableLayoutedMenu SelectionMenu;
-        private VRC_Pickup[] Pickups;
-        private Dictionary<VRC_Pickup, bool[]> PreviousStates = new();
-        private MelonPreferences_Entry<float> min_distance;
-        private MelonPreferences_Entry<bool> patch_all;
-        private MelonPreferences_Entry<bool> take_ownership;
-        internal ICustomShowableLayoutedMenu PickupMenu;
-        internal MelonPreferences_Entry<bool> IsOn;
+        private ICustomShowableLayoutedMenu _selectionMenu;
+        private VRC_Pickup[] _pickups;
+        private readonly Dictionary<IntPtr, object[]> _previousStates = new();
+        private readonly MelonPreferences_Entry<float> _minDistance;
+        private readonly MelonPreferences_Entry<bool> _patchAll;
+        private readonly MelonPreferences_Entry<bool> _takeOwnership;
+        internal readonly ICustomShowableLayoutedMenu PickupMenu;
+        internal readonly MelonPreferences_Entry<bool> IsOn;
 
         internal ItemGrabber()
         {
             MelonPreferences.CreateCategory("ItemGrabber", "PM - Item Grabber");
             IsOn = MelonPreferences.CreateEntry("ItemGrabber", "IsOn", false, "Activate Mod? This is a risky function.");
-            min_distance = MelonPreferences.CreateEntry("ItemGrabber", "GrabDistance", -1.0f, "Distance (meters) for grabbing all, set to -1 for unlimited.");
-            patch_all = MelonPreferences.CreateEntry("ItemGrabber", "PatchAllOnLoad", false, "Patch All on Scene Load");
-            take_ownership = MelonPreferences.CreateEntry("ItemGrabber", "TakeOwnership", true, "Take Ownership of Object on Grab");
+            _minDistance = MelonPreferences.CreateEntry("ItemGrabber", "GrabDistance", -1.0f, "Distance (meters) for grabbing all, set to -1 for unlimited.");
+            _patchAll = MelonPreferences.CreateEntry("ItemGrabber", "PatchAllOnLoad", false, "Patch All on Scene Load");
+            _takeOwnership = MelonPreferences.CreateEntry("ItemGrabber", "TakeOwnership", true, "Take Ownership of Object on Grab");
             PickupMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
             PickupMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
             PickupMenu.AddSimpleButton("Patch", () => Select("Patch"));
@@ -39,107 +39,103 @@ namespace PMod.Modules
             RegisterSubscriptions();
         }
 
-        internal override void OnSceneWasLoaded(int buildIndex, string sceneName)
+        protected override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
-            if (patch_all.Value)
-            {
-                Pickups = Object.FindObjectsOfType<VRC_Pickup>();
-                PatchAll();
-            }
+            if (!_patchAll.Value) return;
+            _pickups = Object.FindObjectsOfType<VRC_Pickup>();
+            PatchAll();
         }
 
-        private void Select(string Type)
+        private void Select(string type)
         {
-            SelectionMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
-            SelectionMenu.AddSimpleButton("Go back", () => PickupMenu.Show());
-            Pickups = Object.FindObjectsOfType<VRC_Pickup>();
-            if (Type == "Patch")
+            _selectionMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
+            _selectionMenu.AddSimpleButton("Go back", () => PickupMenu.Show());
+            _pickups = Object.FindObjectsOfType<VRC_Pickup>();
+            switch (type)
             {
-                SelectionMenu.AddSimpleButton("Patch All", () => PatchAll());
-                foreach (var Pickup in Pickups) 
-                    SelectionMenu.AddSimpleButton(Pickup.name, () => Patch(Pickup));
-
+                case "Patch":
+                {
+                    _selectionMenu.AddSimpleButton("Patch All", PatchAll);
+                    foreach (var pickup in _pickups) 
+                        _selectionMenu.AddSimpleButton(pickup.name, () => Patch(pickup));
+                    break;
+                }
+                case "Unpatch":
+                {
+                    _selectionMenu.AddSimpleButton("Unpatch All", UnpatchAll);
+                    if (_previousStates.Count != 0) 
+                        foreach (var pickup in _previousStates.Values.Where(p => p[0] != null).Select(p => (VRC_Pickup)p[0]))
+                            _selectionMenu.AddSimpleButton(pickup.name, () => { Unpatch(pickup); Select("Unpatch"); });
+                    break;
+                }
+                default:
+                {
+                    _selectionMenu.AddSimpleButton("Grab in Range", () => Trigger(null));
+                    foreach (var pickup in _pickups) _selectionMenu.AddSimpleButton(pickup.name, () => Trigger(pickup));
+                    break;
+                }
             }
-            else if (Type == "Unpatch")
-            {
-                SelectionMenu.AddSimpleButton("Unpatch All", () => UnpatchAll());
-                if (PreviousStates.Count != 0) 
-                    foreach (var Pickup in PreviousStates.Keys) 
-                        if (Pickup != null)
-                            SelectionMenu.AddSimpleButton(Pickup.name, () => { Unpatch(Pickup); Select("Unpatch"); });
-            }
-            else
-            {
-                SelectionMenu.AddSimpleButton("Grab in Range", () => Trigger(null));
-                foreach (var Pickup in Pickups) SelectionMenu.AddSimpleButton(Pickup.name, () => Trigger(Pickup));
-            }
-            SelectionMenu.Show();
+            _selectionMenu.Show();
         }
 
-        private void Patch(VRC_Pickup Item)
+        private void Patch(VRC_Pickup item)
         {
-            var pickup = Item.GetComponent<VRC_Pickup>();
-            if (!PreviousStates.ContainsKey(Item)) PreviousStates.Add(Item, new [] 
+            if (!_previousStates.ContainsKey(item.Pointer)) _previousStates.Add(item.Pointer, new object[] 
             {
-                 pickup.DisallowTheft,
-                 pickup.allowManipulationWhenEquipped,
-                 pickup.pickupable,
-                 Item.gameObject.active
+                item,
+                item.DisallowTheft,
+                item.allowManipulationWhenEquipped,
+                item.pickupable,
+                item.gameObject.active
             });
-            pickup.DisallowTheft = false;
-            pickup.allowManipulationWhenEquipped = true;
-            pickup.pickupable = true;
-            Item.gameObject.SetActive(true);
+            item.DisallowTheft = false;
+            item.allowManipulationWhenEquipped = true;
+            item.pickupable = true;
+            item.gameObject.SetActive(true);
         }
 
-        private void PatchAll() { foreach (var Pickup in Pickups) Patch(Pickup); }
+        private void PatchAll() { foreach (var pickup in _pickups) Patch(pickup); }
 
-        private void Unpatch(VRC_Pickup Item)
+        private void Unpatch(VRC_Pickup item)
         {
-            if (PreviousStates.ContainsKey(Item))
-            {
-                var pickup = Item.GetComponent<VRC_Pickup>();
-                var PreviousState = PreviousStates[Item];
-                pickup.DisallowTheft = PreviousState[0];
-                pickup.allowManipulationWhenEquipped = PreviousState[1];
-                pickup.pickupable = PreviousState[2];
-                Item.gameObject.SetActive(PreviousState[3]);
-                PreviousStates.Remove(Item);
-            }
+            if (!_previousStates.ContainsKey(item.Pointer)) return;
+            var previousState = _previousStates[item.Pointer];
+            item.DisallowTheft = (bool)previousState[1];
+            item.allowManipulationWhenEquipped = (bool)previousState[2];
+            item.pickupable = (bool)previousState[3];
+            item.gameObject.SetActive((bool)previousState[4]);
+            _previousStates.Remove(item.Pointer);
         }
 
         private void UnpatchAll() 
         { 
-            while (PreviousStates.Count != 0) Unpatch(PreviousStates.First().Key);
+            while (_previousStates.Count != 0) Unpatch((VRC_Pickup)_previousStates.First().Value[0]);
             Select("Unpatch");
         }
 
-        private void Trigger(VRC_Pickup Item)
+        private void Trigger(VRC_Pickup item)
         {
-            if (Item == null) foreach (var Pickup in Pickups)
+            if (item == null) foreach (var pickup in _pickups)
             {
-                float dist = Vector3.Distance(Utilities.GetLocalVRCPlayer().transform.position, Pickup.transform.position);
-                if (min_distance.Value == -1 || dist <= min_distance.Value) PickupItem(Pickup);
+                var dist = Vector3.Distance(Utilities.GetLocalVRCPlayer().transform.position, pickup.transform.position);
+                if (Math.Abs(_minDistance.Value + 1) < 0.01 || dist <= _minDistance.Value) PickupItem(pickup);
             }
-            else PickupItem(Item);
+            else PickupItem(item);
         }
         
-        private void PickupItem(VRC_Pickup Item)
+        private void PickupItem(VRC_Pickup item)
         {
             try
             {
-                Patch(Item);
-                if (take_ownership.Value && Networking.GetOwner(Item.gameObject).playerId != Utilities.GetLocalVRCPlayerApi().playerId)
+                Patch(item);
+                if (_takeOwnership.Value && Networking.GetOwner(item.gameObject).playerId != Utilities.GetLocalVRCPlayerApi().playerId)
                 {
-                    Item.GetComponent<VRC_Pickup>().currentlyHeldBy = null;
-                    Networking.SetOwner(Utilities.GetLocalVRCPlayerApi(), Item.gameObject);
+                    item.GetComponent<VRC_Pickup>().currentlyHeldBy = null;
+                    Networking.SetOwner(Utilities.GetLocalVRCPlayerApi(), item.gameObject);
                 }
-                Item.transform.position = Utilities.GetBoneTransform(Player.prop_Player_0, HumanBodyBones.Hips).position;
+                item.transform.position = Utilities.GetBoneTransform(Player.prop_Player_0, HumanBodyBones.Hips).position;
             }
-            catch (Exception e)
-            {
-                PLogger.Error($"Failed to grab item {Item.name}! {e}");
-            }
+            catch (Exception e) { PLogger.Error($"Failed to grab item {item.name}! {e}"); }
         }
     }
 }

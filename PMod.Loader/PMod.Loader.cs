@@ -26,11 +26,11 @@ namespace PMod.Loader
         // Loader info
         public const string Name = "PMod.Loader";
         public const string Author = "Davi";
-        public const string Version = "1.0.3";
+        public const string Version = "1.0.5";
 
         // PMod info
         internal const string ModName = "PMod";
-        internal static string MainLink = "https://davi.codes/vrchat/";
+        internal const string MainLink = "https://davi.codes/vrchat/";
     }
 
     internal class VersionCheckResponse
@@ -43,7 +43,8 @@ namespace PMod.Loader
 
     public class PModLoader : MelonMod
     {
-        private static Delegate[] ActionCalls = new Delegate[12];
+        internal static MelonLogger.Instance Logger;
+        private static readonly Delegate[] ActionCalls = new Delegate[12];
         public override void OnApplicationQuit() => ((Action)ActionCalls[2])?.Invoke();
         public static void VRChat_OnUiManagerInit() => ((Action)ActionCalls[3])?.Invoke();
         public override void OnUpdate() => ((Action)ActionCalls[4])?.Invoke();
@@ -61,7 +62,7 @@ namespace PMod.Loader
                 typeof(UIXManager).GetMethod(nameof(OnApplicationStart))?.Invoke(null, null);
             else
             {
-                MelonLogger.Warning("UiExpansionKit (UIX) was not detected. Using coroutine to wait for UiInit. Please consider installing UIX.");
+                Logger.Warning("UiExpansionKit (UIX) was not detected. Using coroutine to wait for UiInit. Please consider installing UIX.");
                 static IEnumerator OnUiManagerInit()
                 {
                     while (VRCUiManager.prop_VRCUiManager_0 == null)
@@ -74,7 +75,9 @@ namespace PMod.Loader
 
         public override void OnApplicationStart()
         {
-            MelonLogger.Msg(ConsoleColor.Blue, $"Loader's current version: {LInfo.Version}. Checking for updates...");
+            Logger = LoggerInstance;
+            
+            Logger.Msg(ConsoleColor.Blue, $"Loader's current version: {LInfo.Version}. Checking for updates...");
 
             Task.Run(async () =>
             {
@@ -88,44 +91,43 @@ namespace PMod.Loader
                     switch (response.Result)
                     {
                         case "UPDATED":
-                            MelonLogger.Msg(ConsoleColor.Green, $"The Loader is up to date!");
+                            Logger.Msg(ConsoleColor.Green, $"The Loader is up to date!");
                             break;
                         case "OUTDATED":
-                            MelonLogger.Msg(ConsoleColor.Yellow, $"The Loader is outdated! Latest version: {response.Latest}. Downloading...");
+                            Logger.Msg(ConsoleColor.Yellow, $"The Loader is outdated! Latest version: {response.Latest}. Downloading...");
                             File.WriteAllBytes(Path.Combine(Environment.CurrentDirectory, $"Mods/{LInfo.Name}.dll"), 
                                 new WebClient().DownloadData(LInfo.MainLink + $"{LInfo.Name}.dll"));
-                            MelonLogger.Msg(ConsoleColor.Green, $"Successfully updated {LInfo.Name}!");
+                            Logger.Msg(ConsoleColor.Green, $"Successfully updated {LInfo.Name}!");
                             break;
                         default:
-                            MelonLogger.Msg(ConsoleColor.DarkRed, $"Welcome, Savitar. What would you want to do today?");
+                            Logger.Msg(ConsoleColor.DarkRed, $"Welcome, Savitar. What would you want to do today?");
                             break;
                     }
                 }
-                catch (Exception e) { MelonLogger.Warning("Failed to check and download latest version!\n" + e.ToString()); }
+                catch (Exception e) { Logger.Warning($"Failed to check and download latest version!\n{e}"); }
             });
 
             byte[] bytes = null;
             try
             {
-                MelonLogger.Msg(ConsoleColor.Blue, "Attempting to load PMod latest version...");
+                Logger.Msg(ConsoleColor.Blue, "Attempting to load PMod latest version...");
                 bytes = new WebClient().DownloadData(LInfo.MainLink + $"{LInfo.ModName}.dll");
-            }
-            catch { }
-            if (bytes == null) MelonLogger.Error($"Failed to download {LInfo.ModName} from {LInfo.MainLink + $"{LInfo.ModName}.dll"}!");
+            } catch (Exception e) 
+            { Logger.Error($"Failed to download {LInfo.ModName} from {LInfo.MainLink + $"{LInfo.ModName}.dll"}! Error: {e}"); }
 
 #if DEBUG
-            MelonLogger.Warning("This Assembly was built in Debug Mode! Forcing to load from VRChat main folder.");
+            Logger.Warning("This Assembly was built in Debug Mode! Forcing to load from VRChat main folder.");
             bytes = null;
 #endif
 
             if (bytes == null && File.Exists($"{LInfo.ModName}.dll"))
             {
-                MelonLogger.Msg(ConsoleColor.Green, $"Found {LInfo.ModName}.dll in VRChat main folder! Attempting to load it as a last resource...");
+                Logger.Msg(ConsoleColor.Green, $"Found {LInfo.ModName}.dll in VRChat main folder! Attempting to load it as a last resource...");
                 bytes = File.ReadAllBytes($"{LInfo.ModName}.dll");
             }
 
             if (bytes != null) InitializeAssembly(bytes);
-            else MelonLogger.Warning("All attempts to load the assembly failed. PMod won't load.");
+            else Logger.Warning("All attempts to load the assembly failed. PMod won't load.");
 
             WaitForUiInit();
             ((Action)ActionCalls[1])?.Invoke(); // ActionCall OnApplicationStart
@@ -137,20 +139,19 @@ namespace PMod.Loader
             try
             {
                 IEnumerable<Type> types;
-                try { types = Assembly.Load(assembly)?.GetTypes(); }
+                try { types = Assembly.Load(assembly).GetTypes(); }
                 catch (ReflectionTypeLoadException e) { types = e.Types.Where(t => t != null); }
-                methods = types?.FirstOrDefault(type => type.Name == "Main")?.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
-                if (methods == null) throw new NullReferenceException("Couldn't find Main class. Assembly won't load.");
+                methods = types.FirstOrDefault(type => type.Name == "Main")?.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+                if (methods == null) throw new NullReferenceException("Couldn't find Main class.");
             }
-            catch (Exception e) { MelonLogger.Error($"Failed to load Assembly! {e}"); return; }
+            catch (Exception e) { Logger.Error($"Failed to load Assembly! Assembly won't load. Error: {e}"); return; }
 
             foreach (var m in methods)
             {
-                var Parameters = m.GetParameters();
-                if (Parameters.Length == 0)
+                var parameters = m.GetParameters();
+                if (parameters.Length == 0)
                 {
-                    ActionCalls[m.Name switch
-                    {
+                    ActionCalls[m.Name switch {
                         nameof(OnApplicationStart) => 1,
                         nameof(OnApplicationQuit) => 2,
                         nameof(VRChat_OnUiManagerInit) => 3,
@@ -163,10 +164,9 @@ namespace PMod.Loader
                         _ => 0
                     }] = m.CreateDelegate<Action>();
                 }
-                else if ((from p in Parameters select p.ParameterType).SequenceEqual(new[] { typeof(int), typeof(string) }))
+                else if ((from p in parameters select p.ParameterType).SequenceEqual(new[] { typeof(int), typeof(string) }))
                 {
-                    ActionCalls[m.Name switch
-                    {
+                    ActionCalls[m.Name switch {
                         nameof(OnSceneWasLoaded) => 10,
                         nameof(OnSceneWasInitialized) => 11,
                         _ => 0

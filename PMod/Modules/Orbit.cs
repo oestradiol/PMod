@@ -14,24 +14,23 @@ namespace PMod.Modules
 {
     internal class Orbit : ModuleBase
     {
-        private ICustomShowableLayoutedMenu SelectionMenu;
-        private List<OrbitItem> Orbits;
-        private VRCPlayer CurrentPlayer;
-        private MelonPreferences_Entry<bool> patch;
+        private ICustomShowableLayoutedMenu _selectionMenu;
+        private VRCPlayer _currentPlayer;
+        private readonly MelonPreferences_Entry<bool> _patch;
+        private Dictionary<VRC_Pickup, OrbitItem> _pickupOrbits;
 
-        internal ICustomShowableLayoutedMenu OrbitMenu;
-        internal List<VRC_Pickup> Pickups;
+        internal readonly ICustomShowableLayoutedMenu OrbitMenu;
         internal Quaternion rotation;
         internal Quaternion rotationy;
         internal Vector3 OrbitCenter;
         internal float PlayerHeight;
-        internal float Timer = 0f;
-        internal MelonPreferences_Entry<float> radius;
-        internal MelonPreferences_Entry<float> speed;
-        internal MelonPreferences_Entry<float> rotx;
-        internal MelonPreferences_Entry<float> roty;
-        internal MelonPreferences_Entry<float> rotz;
-        internal MelonPreferences_Entry<bool> IsOn;
+        internal float Timer;
+        internal readonly MelonPreferences_Entry<float> radius;
+        internal readonly MelonPreferences_Entry<float> speed;
+        private readonly MelonPreferences_Entry<float> _rotx;
+        private readonly MelonPreferences_Entry<float> _roty;
+        private readonly MelonPreferences_Entry<float> _rotz;
+        internal readonly MelonPreferences_Entry<bool> IsOn;
         internal RotType rotType;
         internal enum RotType
         {
@@ -46,16 +45,16 @@ namespace PMod.Modules
             IsOn = MelonPreferences.CreateEntry("Orbit", "IsOn", false, "Activate Mod? This is a risky function.");
             radius = MelonPreferences.CreateEntry("Orbit", "Radius", 1.0f, "Radius");
             speed = MelonPreferences.CreateEntry("Orbit", "Speed", 1.0f, "Speed");
-            patch = MelonPreferences.CreateEntry("Orbit", "Patch", true, "Patch items on Orbit");
-            rotx = MelonPreferences.CreateEntry("Orbit", "RotationX", 0.0f, "X Rotation");
-            roty = MelonPreferences.CreateEntry("Orbit", "RotationY", 0.0f, "Y Rotation");
-            rotz = MelonPreferences.CreateEntry("Orbit", "RotationZ", 0.0f, "Z Rotation");
+            _patch = MelonPreferences.CreateEntry("Orbit", "Patch", true, "Patch items on Orbit");
+            _rotx = MelonPreferences.CreateEntry("Orbit", "RotationX", 0.0f, "X Rotation");
+            _roty = MelonPreferences.CreateEntry("Orbit", "RotationY", 0.0f, "Y Rotation");
+            _rotz = MelonPreferences.CreateEntry("Orbit", "RotationZ", 0.0f, "Z Rotation");
             OrbitMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
             OrbitMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
-            OrbitMenu.AddSimpleButton("Stop Orbit", () => StopOrbit());
-            OrbitMenu.AddSimpleButton("Circular Orbit", () => SelectOrbit("Circular"));
-            OrbitMenu.AddSimpleButton("Spherical Orbit", () => SelectOrbit("Spherical"));
-            OrbitMenu.AddSimpleButton("Cylindrical Orbit", () => SelectOrbit("Cylindrical"));
+            OrbitMenu.AddSimpleButton("Stop Orbit", StopOrbit);
+            OrbitMenu.AddSimpleButton("Circular Orbit", () => SelectOrbit(RotType.CircularRot));
+            OrbitMenu.AddSimpleButton("Spherical Orbit", () => SelectOrbit(RotType.SphericalRot));
+            OrbitMenu.AddSimpleButton("Cylindrical Orbit", () => SelectOrbit(RotType.CylindricalRot));
             OnPreferencesSaved();
             useOnPreferencesSaved = true;
             useOnUiManagerInit = true;
@@ -63,120 +62,110 @@ namespace PMod.Modules
             useOnInstanceChanged = true;
             useOnPlayerLeft = true;
             RegisterSubscriptions();
+        } 
+
+        protected sealed override void OnPreferencesSaved()
+        {
+            rotation = Quaternion.Euler(_rotx.Value, 0, _rotz.Value);
+            rotationy = Quaternion.Euler(0, _roty.Value, 0);
         }
 
-        internal override void OnPreferencesSaved()
-        {
-            rotation = Quaternion.Euler(rotx.Value, 0, rotz.Value);
-            rotationy = Quaternion.Euler(0, roty.Value, 0);
-        }
+        protected override void OnUiManagerInit() => NetworkEvents.OnInstanceChangedAction += OnInstanceChanged;
 
-        internal override void OnUiManagerInit() => NetworkEvents.OnInstanceChangedAction += OnInstanceChanged;
-        
-        internal override void OnUpdate()
+        protected override void OnUpdate()
         {
-            if (Pickups != null && Orbits != null && CurrentPlayer != null)
+            if (_pickupOrbits != null && _currentPlayer != null)
             {
                 OrbitCenter = GetCenter();
-                for (int i = 0; i < Pickups.Count; i++)
+                foreach (var pickupOrbit in _pickupOrbits)
                 {
-                    if (Pickups[i] == null)
-                    {
-                        Pickups.RemoveAt(i);
-                        Orbits.RemoveAt(i);
-                    }
+                    var key = pickupOrbit.Key;
+                    var value = pickupOrbit.Value;
+                    if (key == null)
+                        _pickupOrbits.Remove(key);
                     else
                     {
-                        if (patch.Value) Patch(Pickups[i]);
-                        Pickups[i].transform.position = Orbits[i].CurrentPos();
-                        Pickups[i].transform.rotation = Orbits[i].CurrentRot();
+                        if (_patch.Value) Patch(key);
+                        key.transform.position = value.CurrentPos();
+                        key.transform.rotation = value.CurrentRot();
                     }
                 }
             }
             Timer += Time.deltaTime;
         }
 
-        internal override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => StopOrbit();
+        protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => StopOrbit();
 
-        internal override void OnPlayerLeft(Player player) { if (CurrentPlayer == player) StopOrbit(); }
+        protected override void OnPlayerLeft(Player player) { if (_currentPlayer != null && _currentPlayer._player.prop_APIUser_0.id == player.prop_APIUser_0.id) StopOrbit(); }
 
-        private void SelectOrbit(string Type)
+        private void SelectOrbit(RotType type)
         {
-            SelectionMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
-            SelectionMenu.AddSimpleButton("Go back", () => OrbitMenu.Show());
-            if (Type == "Circular") rotType = RotType.CircularRot;
-            else if (Type == "Cylindrical") rotType = RotType.CylindricalRot;
-            else rotType = RotType.SphericalRot;
+            rotType = type;
+            _selectionMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
+            _selectionMenu.AddSimpleButton("Go back", () => OrbitMenu.Show());
             foreach (var player in Object.FindObjectsOfType<VRCPlayer>()) 
-                SelectionMenu.AddSimpleButton($"{player.prop_Player_0.prop_APIUser_0.displayName}", () => ToOrbit(player));
-            SelectionMenu.Show();
+                _selectionMenu.AddSimpleButton($"{player.prop_Player_0.prop_APIUser_0.displayName}", () => ToOrbit(player));
+            _selectionMenu.Show();
         }
 
-        private void ToOrbit(VRCPlayer Player)
+        private void ToOrbit(VRCPlayer player)
         {
-            if (CurrentPlayer != null) StopOrbit();
-            CurrentPlayer = Player;
+            if (_currentPlayer != null) StopOrbit();
+            _currentPlayer = player;
             Timer = 0f;
-            Pickups = Object.FindObjectsOfType<VRC_Pickup>().ToList();
+            var pickups = Object.FindObjectsOfType<VRC_Pickup>();
             OrbitCenter = GetCenter();
-            Orbits = new List<OrbitItem>();
-            for (int i = 0; i < Pickups.Count; i++)
-                Orbits.Add(new OrbitItem(Pickups[i], i));
+            for (var i = 0; i < pickups.Count; i++)
+                _pickupOrbits.Add(pickups[i], new OrbitItem(pickups, i));
         }
 
         private void StopOrbit()
         {
-            if (Pickups != null)
+            if (_pickupOrbits == null) return;
+            foreach (var keyValuePair in _pickupOrbits)
             {
-                for (int i = 0; i < Pickups.Count; i++)
-                {
-                    Orbits[i].IsOn = false;
-                    if (Pickups[i])
-                    {
-                        Pickups[i].transform.position = Orbits[i].CurrentPos();
-                        Pickups[i].transform.rotation = Orbits[i].CurrentRot();
-                        Unpatch(i);
-                    }
-                }
+                var key = keyValuePair.Key;
+                var value = keyValuePair.Value;
+                value.IsOn = false;
+                if (key == null) continue;
+                key.transform.position = value.CurrentPos();
+                key.transform.rotation = value.CurrentRot();
+                Unpatch(key, value);
             }
-            Pickups = null;
-            Orbits = null;
-            CurrentPlayer = null;
+            _pickupOrbits = null;
+            _currentPlayer = null;
         }
 
-        private void Patch(VRC_Pickup Item)
+        private static void Patch(VRC_Pickup item)
         {
-            VRCPlayerApi GetOwner() => Networking.GetOwner(Item.gameObject);
-            Item.GetComponent<VRC_Pickup>().DisallowTheft = true;
-            Item.GetComponent<VRC_Pickup>().pickupable = false;
-            Item.GetComponent<Rigidbody>().isKinematic = true;
-            Item.GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 0);
-            Item.gameObject.SetActive(true);
-            if (GetOwner().playerId != Utilities.GetLocalVRCPlayerApi().playerId)
-            {
-                Item.GetComponent<VRC_Pickup>().currentlyHeldBy = null; 
-                Networking.SetOwner(Utilities.GetLocalVRCPlayerApi(), Item.gameObject);
-            }
+            item.DisallowTheft = true;
+            item.pickupable = false;
+            item.GetComponent<Rigidbody>().isKinematic = true;
+            item.GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 0);
+            item.gameObject.SetActive(true);
+            if (Networking.GetOwner(item.gameObject).playerId == Utilities.GetLocalVRCPlayerApi().playerId) return;
+            item.currentlyHeldBy = null; 
+            Networking.SetOwner(Utilities.GetLocalVRCPlayerApi(), item.gameObject);
         }
 
-        private void Unpatch(int i)
+        private static void Unpatch(VRC_Pickup key, OrbitItem value)
         {
-            Pickups[i].GetComponent<VRC_Pickup>().DisallowTheft = Orbits[i].InitialTheft;
-            Pickups[i].GetComponent<VRC_Pickup>().pickupable = Orbits[i].InitialPickupable;
-            Pickups[i].GetComponent<Rigidbody>().isKinematic = Orbits[i].InitialKinematic;
-            Pickups[i].GetComponent<Rigidbody>().velocity = Orbits[i].InitialVelocity;
-            Pickups[i].gameObject.SetActive(Orbits[i].InitialActive);
+            key.DisallowTheft = value.InitialTheft;
+            key.pickupable = value.InitialPickupable;
+            key.GetComponent<Rigidbody>().isKinematic = value.InitialKinematic;
+            key.GetComponent<Rigidbody>().velocity = value.InitialVelocity;
+            key.gameObject.SetActive(value.InitialActive);
         }
 
         private Vector3 GetCenter()
         {
-            Vector3 Head = Utilities.GetBoneTransform(CurrentPlayer.prop_Player_0, HumanBodyBones.Head).position;
-            if (rotType == RotType.CircularRot) return Head;
+            var head = Utilities.GetBoneTransform(_currentPlayer.prop_Player_0, HumanBodyBones.Head).position;
+            if (rotType == RotType.CircularRot) return head;
             else
             {
-                Vector3 Pos = CurrentPlayer.transform.position;
-                PlayerHeight = (Head - Pos).y;
-                return Pos;
+                var pos = _currentPlayer.transform.position;
+                PlayerHeight = (head - pos).y;
+                return pos;
             }
         }
     }

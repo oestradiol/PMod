@@ -11,13 +11,13 @@ namespace PMod.Modules
 {
     internal class PhotonFreeze : ModuleBase
     {
-        private ICustomShowableLayoutedMenu FreezeMenu;
-        private Transform CloneObj;
-        private Vector3 OriginalPos;
-        private Quaternion OriginalRot;
-        internal int PhotonID = 0;
-        internal bool IsFreeze = false;
-        internal MelonPreferences_Entry<bool> IsOn;
+        private ICustomShowableLayoutedMenu _freezeMenu;
+        private Transform _cloneObj;
+        private Vector3 _originalPos;
+        private Quaternion _originalRot;
+        internal int PhotonID;
+        internal bool IsFreeze;
+        internal readonly MelonPreferences_Entry<bool> IsOn;
 
         internal PhotonFreeze()
         {
@@ -29,51 +29,52 @@ namespace PMod.Modules
             RegisterSubscriptions();
         }
 
-        internal override void OnPlayerJoined(Player player) 
+        protected override void OnPlayerJoined(Player player) 
         { 
             if (player.prop_APIUser_0.id == Utilities.GetLocalAPIUser().id) 
                 PhotonID = player.gameObject.GetComponent<PhotonView>().viewIdField;
         }
 
-        internal Vector3 PreviousPos;
-        internal bool IsMaxD = false;
-        internal override void OnUpdate()
+        private Vector3 _previousPos;
+        private bool _isMaxD;
+
+        protected override void OnUpdate()
         {
             if (!IsOn.Value) return;
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L))
             {
                 var temp = Utilities.GetLocalVRCPlayer().gameObject.transform;
-                IsMaxD = !IsMaxD;
-                if (IsMaxD)
+                _isMaxD = !_isMaxD;
+                if (_isMaxD)
                 {
-                    PreviousPos = temp.position;
+                    _previousPos = temp.position;
                     temp.position = new Vector3(10000000, 10000000, 10000000);
                 }
                 else
-                    temp.position = PreviousPos;
+                    temp.position = _previousPos;
             }
             else if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.K))
             {
                 ToggleFreeze();
-                FreezeMenu.Hide();
+                _freezeMenu.Hide();
             }
         }
 
-        internal override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => IsFreeze = false;
+        protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => IsFreeze = false;
 
         internal void ShowFreezeMenu()
         {
-            FreezeMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
-            FreezeMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
-            FreezeMenu.AddToggleButton("PhotonFreeze", (_) => ToggleFreeze(), () => IsFreeze);
-            if (IsFreeze) FreezeMenu.AddSimpleButton("TP To Frozen Position", () => { TPPlayerToPos(OriginalPos, OriginalRot); });
-            FreezeMenu.Show();
+            _freezeMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
+            _freezeMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
+            _freezeMenu.AddToggleButton("PhotonFreeze", (_) => ToggleFreeze(), () => IsFreeze);
+            if (IsFreeze) _freezeMenu.AddSimpleButton("TP To Frozen Position", () => { TpPlayerToPos(_originalPos, _originalRot); });
+            _freezeMenu.Show();
         }
 
-        private void TPPlayerToPos(Vector3 OriginalPos, Quaternion OriginalRot)
+        private static void TpPlayerToPos(Vector3 originalPos, Quaternion originalRot)
         {
-            Utilities.GetLocalVRCPlayer().transform.position = OriginalPos;
-            Utilities.GetLocalVRCPlayer().transform.rotation = OriginalRot;
+            Utilities.GetLocalVRCPlayer().transform.position = originalPos;
+            Utilities.GetLocalVRCPlayer().transform.rotation = originalRot;
         }
 
         private void ToggleFreeze()
@@ -81,33 +82,33 @@ namespace PMod.Modules
             IsFreeze = !IsFreeze;
             if (IsFreeze)
             {
-                OriginalPos = Utilities.GetLocalVRCPlayerApi().GetPosition();
-                OriginalRot = Utilities.GetLocalVRCPlayer().transform.rotation;
+                _originalPos = Utilities.GetLocalVRCPlayerApi().GetPosition();
+                _originalRot = Utilities.GetLocalVRCPlayer().transform.rotation;
             }
             Clone(IsFreeze);
             ShowFreezeMenu();
         }
 
-        private void Clone(bool Toggle)
+        private void Clone(bool toggle)
         {
-            if (Toggle)
+            if (toggle)
             {
-                CloneObj = Object.Instantiate(Utilities.GetLocalVRCPlayer().prop_VRCAvatarManager_0.transform.Find("Avatar"), null, true);
-                CloneObj.name = "Cloned Frozen Avatar";
-                CloneObj.position = Utilities.GetLocalVRCPlayer().transform.position;
-                CloneObj.rotation = Utilities.GetLocalVRCPlayer().transform.rotation;
+                _cloneObj = Object.Instantiate(Utilities.GetLocalVRCPlayer().prop_VRCAvatarManager_0.transform.Find("Avatar"), null, true);
+                _cloneObj.name = "Cloned Frozen Avatar";
+                _cloneObj.position = Utilities.GetLocalVRCPlayer().transform.position;
+                _cloneObj.rotation = Utilities.GetLocalVRCPlayer().transform.rotation;
 
-                Animator animator = CloneObj.GetComponent<Animator>();
+                var animator = _cloneObj.GetComponent<Animator>();
                 if (animator != null && animator.isHuman)
                 {
-                    Transform boneTransform = animator.GetBoneTransform(HumanBodyBones.Head);
+                    var boneTransform = animator.GetBoneTransform(HumanBodyBones.Head);
                     if (boneTransform != null) boneTransform.localScale = Vector3.one;
                 }
-                foreach (Component component in CloneObj.GetComponents<Component>())
-                    if (!(component is Transform)) Object.Destroy(component);
-                Tools.SetLayerRecursively(CloneObj.gameObject, LayerMask.NameToLayer("Player"));
+                foreach (var component in _cloneObj.GetComponents<Component>())
+                    if (component is not Transform) Object.Destroy(component);
+                Tools.SetLayerRecursively(_cloneObj.gameObject, LayerMask.NameToLayer("Player"));
             }
-            else Object.Destroy(CloneObj.gameObject);
+            else Object.Destroy(_cloneObj.gameObject);
         }
     }
 }

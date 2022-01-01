@@ -7,20 +7,20 @@ namespace PMod.Modules
 {
     internal class TeleportToCursor : ModuleBase
     {
-        private MelonPreferences_Entry<bool> IsOn;
+        private readonly MelonPreferences_Entry<bool> _isOn;
 
         internal TeleportToCursor()
         {
             MelonPreferences.CreateCategory("TeleportToCursor", "PM - Teleport To Cursor");
-            IsOn = MelonPreferences.CreateEntry("TeleportToCursor", "IsOn", false, "Activate Mod? This is a risky function.");
+            _isOn = MelonPreferences.CreateEntry("TeleportToCursor", "IsOn", false, "Activate Mod? This is a risky function.");
             useOnUpdate = true;
             RegisterSubscriptions();
         }
 
         // Check for button trigger and teleports
-        internal override void OnUpdate()
+        protected override void OnUpdate()
         {
-            if (!IsOn.Value) return;
+            if (!_isOn.Value) return;
             if (Input.GetKeyDown(KeyCode.Mouse4) &&
                     Utilities.GetLocalVRCPlayer() != null &&
                     Physics.Raycast(CameraComponent.ScreenPointToRay(Input.mousePosition), out var hitInfo))
@@ -28,9 +28,9 @@ namespace PMod.Modules
         }
 
         // Gets the center of the eye (camera)
-        private static Camera cameraComponent;
+        private static Camera _cameraComponent;
         private static Camera CameraComponent =>
-                cameraComponent ??= Resources.FindObjectsOfTypeAll<NeckMouseRotator>()[0]
+                _cameraComponent ??= Resources.FindObjectsOfTypeAll<NeckMouseRotator>()[0]
                     .transform.Find(Environment.CurrentDirectory.Contains("vrchat-vrchat") ? "CenterEyeAnchor" : "Camera (head)/Camera (eye)").GetComponent<Camera>();
     }
 }

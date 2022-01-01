@@ -15,7 +15,7 @@ namespace PMod.Utils
     {
         internal static unsafe TDelegate Patch<TDelegate>(MethodInfo originalMethod, IntPtr patchDetour) where TDelegate : Delegate
         {
-            IntPtr original = *(IntPtr*)(IntPtr)UnhollowerUtils.GetIl2CppMethodInfoPointerFieldForGeneratedMethod(originalMethod).GetValue(null);
+            var original = *(IntPtr*)(IntPtr)UnhollowerUtils.GetIl2CppMethodInfoPointerFieldForGeneratedMethod(originalMethod).GetValue(null);
             MelonUtils.NativeHookAttach((IntPtr)(&original), patchDetour);
             return Marshal.GetDelegateForFunctionPointer<TDelegate>(original);
         }
@@ -30,38 +30,39 @@ namespace PMod.Utils
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate IntPtr OnEventDelegate(IntPtr instancePtr, IntPtr eventDataPtr, IntPtr nativeMethodInfoPtr);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate IntPtr RaiseEventDelegate(IntPtr instancePtr, byte EType, IntPtr ObjPtr, IntPtr EOptionsPtr, IntPtr SOptionsPtr, IntPtr nativeMethodInfoPtr);
+        private delegate IntPtr RaiseEventDelegate(IntPtr instancePtr, byte eType, IntPtr objPtr, IntPtr eOptionsPtr, IntPtr sOptionsPtr, IntPtr nativeMethodInfoPtr);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void LocalToGlobalDelegate(IntPtr instancePtr, IntPtr eventPtr, VRC_EventHandler.VrcBroadcastType broadcast, int instigatorId, float fastForward, IntPtr nativeMethodInfoPtr);
-        private static OnEventDelegate onEventDelegate;
-        private static RaiseEventDelegate raiseEventDelegate;
-        private static LocalToGlobalDelegate localToGlobalDelegate;
-        internal unsafe static void OnApplicationStart()
+        private static OnEventDelegate _onEventDelegate;
+        private static RaiseEventDelegate _raiseEventDelegate;
+        private static LocalToGlobalDelegate _localToGlobalDelegate;
+        internal static void OnApplicationStart()
         {
-            onEventDelegate = NativePatchUtils.Patch<OnEventDelegate>(typeof(VRCNetworkingClient)
+            _onEventDelegate = NativePatchUtils.Patch<OnEventDelegate>(typeof(VRCNetworkingClient)
                 .GetMethod(nameof(VRCNetworkingClient.OnEvent)),
                 NativePatchUtils.GetDetour<NativePatches>(nameof(OnEventSetup)));
 
-            raiseEventDelegate = NativePatchUtils.Patch<RaiseEventDelegate>(typeof(LoadBalancingClient)
+            _raiseEventDelegate = NativePatchUtils.Patch<RaiseEventDelegate>(typeof(LoadBalancingClient)
                 .GetMethod(nameof(LoadBalancingClient.Method_Public_Virtual_New_Boolean_Byte_Object_RaiseEventOptions_SendOptions_0)),
                 NativePatchUtils.GetDetour<NativePatches>(nameof(RaiseEventSetup)));
 
-            localToGlobalDelegate = NativePatchUtils.Patch<LocalToGlobalDelegate>(typeof(VRC_EventHandler)
+            _localToGlobalDelegate = NativePatchUtils.Patch<LocalToGlobalDelegate>(typeof(VRC_EventHandler)
                 .GetMethod(nameof(VRC_EventHandler.InternalTriggerEvent)),
                 NativePatchUtils.GetDetour<NativePatches>(nameof(LocalToGlobalSetup)));
         }
 
-        private static bool turnOffNext = false;
+        private static bool _turnOffNext;
         private static void OnEventSetup(IntPtr instancePtr, IntPtr eventDataPtr, IntPtr nativeMethodInfoPtr)
         {
-            EventData eventData = UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<EventData>(eventDataPtr);
+            var eventData = UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<EventData>(eventDataPtr);
             switch (eventData.Code)
             {
                 case 7:
                     try
                     {
                         Timer entry = null;
-                        try { entry = ModulesManager.frozenPlayersManager.EntryDict[Utilities.GetPlayerFromPhotonID(eventData.Sender)?.field_Private_APIUser_0.id]; } catch { };
+                        var key = Utilities.GetPlayerFromPhotonID(eventData.Sender)?.field_Private_APIUser_0.id;
+                        if (key != null) ModulesManager.frozenPlayersManager.EntryDict.TryGetValue(key, out entry);
                         entry?.RestartTimer();
                     }
                     catch (Exception e)
@@ -78,13 +79,13 @@ namespace PMod.Utils
 
                         eventData.Parameters[251].Cast<Il2CppSystem.Collections.Hashtable>()["avatarDict"] = ModulesManager.softClone.CurrAvatarDict;
 
-                        if (turnOffNext)
+                        if (_turnOffNext)
                         {
                             ModulesManager.softClone.CurrAvatarDict = null;
                             ModulesManager.softClone.IsSoftClone = false;
-                            turnOffNext = false;
+                            _turnOffNext = false;
                         }
-                        else turnOffNext = true;
+                        else _turnOffNext = true;
                     }
                     catch (Exception e)
                     {
@@ -93,26 +94,26 @@ namespace PMod.Utils
                     }
                     break;
             }
-            onEventDelegate(instancePtr, eventDataPtr, nativeMethodInfoPtr);
+            _onEventDelegate(instancePtr, eventDataPtr, nativeMethodInfoPtr);
         }
 
         // Please don't use InvisibleJoin, it's dangerous af lol u r gonna get banned XD // Also, why would u even use this? creep
-        private static Il2CppSystem.Object LastSent;
-        internal static bool triggerInvisible = false;
-        private static IntPtr RaiseEventSetup(IntPtr instancePtr, byte EType, IntPtr Obj, IntPtr EOptions, IntPtr SOptions, IntPtr nativeMethodInfoPtr)
+        private static Il2CppSystem.Object _lastSent;
+        internal static bool triggerInvisible;
+        private static IntPtr RaiseEventSetup(IntPtr instancePtr, byte eType, IntPtr objPtr, IntPtr eOptions, IntPtr sOptions, IntPtr nativeMethodInfoPtr)
         {
-            IntPtr _return = IntPtr.Zero;
-            switch (EType)
+            var @return = IntPtr.Zero;
+            switch (eType)
             {
                 case 7:
                     try
                     {
-                        if (Il2CppArrayBase<int>.WrapNativeGenericArrayPointer(Obj)[0] != ModulesManager.photonFreeze.PhotonID) break;
+                        if (Il2CppArrayBase<int>.WrapNativeGenericArrayPointer(objPtr)[0] != ModulesManager.photonFreeze.PhotonID) break;
 
                         if (!ModulesManager.photonFreeze.IsFreeze)
-                            LastSent = new Il2CppSystem.Object(Obj);
+                            _lastSent = new Il2CppSystem.Object(objPtr);
                         else
-                            _return = raiseEventDelegate(instancePtr, EType, LastSent.Pointer, EOptions, SOptions, nativeMethodInfoPtr);
+                            @return = _raiseEventDelegate(instancePtr, eType, _lastSent.Pointer, eOptions, sOptions, nativeMethodInfoPtr);
                     }
                     catch (Exception e)
                     {
@@ -125,10 +126,10 @@ namespace PMod.Utils
                     {
                         if (!triggerInvisible) break;
 
-                        RaiseEventOptions REOptions = UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<RaiseEventOptions>(EOptions);
-                        REOptions.field_Public_ReceiverGroup_0 = (ReceiverGroup)3;
-                        _return = raiseEventDelegate(instancePtr, EType, Obj, EOptions, SOptions, nativeMethodInfoPtr);
-                        REOptions.field_Public_ReceiverGroup_0 = ReceiverGroup.Others;
+                        var reOptions = UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<RaiseEventOptions>(eOptions);
+                        reOptions.field_Public_ReceiverGroup_0 = (ReceiverGroup)3;
+                        @return = _raiseEventDelegate(instancePtr, eType, objPtr, eOptions, sOptions, nativeMethodInfoPtr);
+                        reOptions.field_Public_ReceiverGroup_0 = ReceiverGroup.Others;
 
                         if (ModulesManager.invisibleJoin.onceOnly) triggerInvisible = false;
                     }
@@ -139,19 +140,18 @@ namespace PMod.Utils
                     }
                     break;
             }
-            return _return != IntPtr.Zero ? _return : raiseEventDelegate(instancePtr, EType, Obj, EOptions, SOptions, nativeMethodInfoPtr);
+            return @return != IntPtr.Zero ? @return : _raiseEventDelegate(instancePtr, eType, objPtr, eOptions, sOptions, nativeMethodInfoPtr);
         }
 
-        internal static bool triggerOnceLTG = false;
+        internal static bool triggerOnceLtg;
         private static void LocalToGlobalSetup(IntPtr instancePtr, IntPtr eventPtr, VRC_EventHandler.VrcBroadcastType broadcast, int instigatorId, float fastForward, IntPtr nativeMethodInfoPtr)
         {
             try
             {
-                if ((ModulesManager.triggers.IsAlwaysForceGlobal || triggerOnceLTG) && broadcast == VRC_EventHandler.VrcBroadcastType.Local)
+                if ((ModulesManager.triggers.IsAlwaysForceGlobal || triggerOnceLtg) && broadcast == VRC_EventHandler.VrcBroadcastType.Local)
                 {
-                    VRC_EventHandler.VrcEvent @event = UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<VRC_EventHandler.VrcEvent>(eventPtr);
                     broadcast = VRC_EventHandler.VrcBroadcastType.AlwaysUnbuffered;
-                    triggerOnceLTG = false;
+                    triggerOnceLtg = false;
                 }
             }
             catch (Exception e)
@@ -159,7 +159,7 @@ namespace PMod.Utils
                 PLogger.Warning("Something went wrong in LocalToGlobalSetup Detour");
                 PLogger.Error($"{e}");
             }
-            localToGlobalDelegate(instancePtr, eventPtr, broadcast, instigatorId, fastForward, nativeMethodInfoPtr);
+            _localToGlobalDelegate(instancePtr, eventPtr, broadcast, instigatorId, fastForward, nativeMethodInfoPtr);
         }
     }
 }

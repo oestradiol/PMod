@@ -1,6 +1,7 @@
 ﻿using PMod.Loader;
 using PMod.Utils;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Linq;
@@ -8,47 +9,48 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using MelonLoader;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.Core;
 
 namespace PMod.Modules
 {
     internal class CopyAsset : ModuleBase
     {
-        private MelonPreferences_Entry<string> ToPath;
+        private readonly MelonPreferences_Entry<string> _toPath;
 
-        internal VRC.UI.Elements.Menus.SelectedUserMenuQM selectedUserMenuQM;
+        private VRC.UI.Elements.Menus.SelectedUserMenuQM _selectedUserMenuQm;
 
         internal CopyAsset()
         {
             MelonPreferences.CreateCategory("CopyAsset", "PM - Copy Asset");
-            ToPath = MelonPreferences.CreateEntry("CopyAsset", "ToPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
+            _toPath = MelonPreferences.CreateEntry("CopyAsset", "ToPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
             useOnUiManagerInit = true;
             RegisterSubscriptions();
         }
 
-        internal override void OnUiManagerInit()
+        protected override void OnUiManagerInit()
         {
-            selectedUserMenuQM = Resources.FindObjectsOfTypeAll<VRC.UI.Elements.Menus.SelectedUserMenuQM>()[1];
-            var AddToFavoritesButton = selectedUserMenuQM.transform.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_AvatarActions/Button_AddToFavorites");
-            var CopyAssetButton = UnityEngine.Object.Instantiate(AddToFavoritesButton, AddToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<UnityEngine.UI.Button>();
-            UnityEngine.Object.DestroyImmediate(CopyAssetButton.transform.Find("Favorite Disabled Button").gameObject);
-            CopyAssetButton.onClick = new();
-            CopyAssetButton.onClick.AddListener(new Action(() => _CopyAsset()));
-            CopyAssetButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Copy Asset";
-            CopyAssetButton.GetComponent<VRC.UI.Elements.Tooltips.UiTooltip>().field_Public_String_0 = "Copies the asset file to the destined folder.";
-            CopyAssetButton.name = "Button_CopyAssetButton";
+            _selectedUserMenuQm = Resources.FindObjectsOfTypeAll<VRC.UI.Elements.Menus.SelectedUserMenuQM>()[1];
+            var addToFavoritesButton = _selectedUserMenuQm.transform.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_AvatarActions/Button_AddToFavorites");
+            var copyAssetButton = UnityEngine.Object.Instantiate(addToFavoritesButton, addToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<Button>();
+            UnityEngine.Object.DestroyImmediate(copyAssetButton.transform.Find("Favorite Disabled Button").gameObject);
+            copyAssetButton.onClick = new Button.ButtonClickedEvent();
+            copyAssetButton.onClick.AddListener(new Action(_CopyAsset));
+            copyAssetButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Copy Asset";
+            copyAssetButton.GetComponent<VRC.UI.Elements.Tooltips.UiTooltip>().field_Public_String_0 = "Copies the asset file to the destined folder.";
+            copyAssetButton.name = "Button_CopyAssetButton";
         }
 
         private void _CopyAsset()
         {
-            ApiAvatar avatar = Utilities.GetPlayerFromID(selectedUserMenuQM.field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
-            if (!Directory.Exists(ToPath.Value)) Directory.CreateDirectory(ToPath.Value);
+            var avatar = Utilities.GetPlayerFromID(_selectedUserMenuQm.field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
+            if (!Directory.Exists(_toPath.Value)) Directory.CreateDirectory(_toPath.Value);
             try
             {
                 ToCopyAsset(avatar);
                 DelegateMethods.PopupV2(
                     "Copy Asset",
-                    $"Successfully copied avatar \"{avatar.name}\" to folder \"{ToPath.Value}\"!",
+                    $"Successfully copied avatar \"{avatar.name}\" to folder \"{_toPath.Value}\"!",
                     "Close",
                     new Action(() => { VRCUiManager.prop_VRCUiManager_0.HideScreen("POPUP"); }));
             }
@@ -63,29 +65,29 @@ namespace PMod.Modules
             }
         }
 
-        private string ByteArrayToString(byte[] ba)
+        private static string ByteArrayToString(IReadOnlyCollection<byte> ba)
         {
-            StringBuilder hex = new(ba.Length * 2);
-            foreach (byte b in ba) hex.AppendFormat("{0:x2}", b);
+            StringBuilder hex = new(ba.Count * 2);
+            foreach (var b in ba) hex.AppendFormat("{0:x2}", b);
             return hex.ToString();
         }
 
-        private string ComputeVersionString(string assetUrl)
+        private static string ComputeVersionString(string assetUrl)
         {
-            string result = "";
-            foreach (byte b in BitConverter.GetBytes(int.Parse(new Regex("(?:\\/file_[0-9A-Za-z-]+\\/)([0-9]+)", RegexOptions.Compiled)?.Match(assetUrl)?.Groups[1]?.Value)))
-                result += b.ToString("X2");
+            string result = BitConverter.GetBytes(
+                    int.Parse(new Regex("(?:\\/file_[0-9A-Za-z-]+\\/)([0-9]+)", RegexOptions.Compiled).Match(assetUrl).Groups[1].Value))
+                .Aggregate("", (current, b) => current + b.ToString("X2"));
             return string.Concat(Enumerable.Repeat("0", (32 - result.Length))) + result;
         }
 
         private void ToCopyAsset(ApiAvatar avatar) =>
-            File.Copy(new DirectoryInfo(
-                    Path.Combine(
-                        AssetBundleDownloadManager.prop_AssetBundleDownloadManager_0.field_Private_Cache_0.path,
-                        ByteArrayToString(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(avatar.assetUrl.Substring(avatar.assetUrl.IndexOf("file_"), 41)))).ToUpper().Substring(0, 16),
-                        ComputeVersionString(avatar.assetUrl)))
-                    .GetFiles("*.*", SearchOption.AllDirectories).First(file => file.Name.Contains("__data")).FullName,
-                    Path.Combine(ToPath.Value, $"{avatar.id}.vrca"),
-                    true);
+            File.Copy(new DirectoryInfo(Path.Combine(
+                            AssetBundleDownloadManager.prop_AssetBundleDownloadManager_0.field_Private_Cache_0.path,
+                            ByteArrayToString(SHA256.Create().ComputeHash(
+                                    Encoding.UTF8.GetBytes(avatar.assetUrl.Substring(avatar.assetUrl.IndexOf("file_", StringComparison.Ordinal), 41))))
+                                .ToUpper().Substring(0, 16),
+                            ComputeVersionString(avatar.assetUrl)))
+                    .GetFiles("*.*", SearchOption.AllDirectories)
+                    .First(file => file.Name.Contains("__data")).FullName, Path.Combine(_toPath.Value, $"{avatar.id}.vrca"), true);
     }
 }

@@ -23,27 +23,27 @@ namespace PMod.Utils
                 new HarmonyMethod(typeof(NetworkEvents).GetMethod(nameof(OnInstanceChangeMethod), BindingFlags.NonPublic | BindingFlags.Static)));
         }
 
-        private static bool SeenFire;
-        private static bool AFiredFirst;
+        private static bool _seenFire;
+        private static bool _aFiredFirst;
         private static void EventHandlerA(Player player)
         {
-            if (!SeenFire)
+            if (!_seenFire)
             {
-                AFiredFirst = true;
-                SeenFire = true;
+                _aFiredFirst = true;
+                _seenFire = true;
             }
 
-            (AFiredFirst ? OnPlayerJoinedAction : OnPlayerLeftAction)?.Invoke(player);
+            (_aFiredFirst ? OnPlayerJoinedAction : OnPlayerLeftAction)?.Invoke(player);
         }
         private static void EventHandlerB(Player player)
         {
-            if (!SeenFire)
+            if (!_seenFire)
             {
-                AFiredFirst = false;
-                SeenFire = true;
+                _aFiredFirst = false;
+                _seenFire = true;
             }
 
-            (AFiredFirst ? OnPlayerLeftAction : OnPlayerJoinedAction)?.Invoke(player);
+            (_aFiredFirst ? OnPlayerLeftAction : OnPlayerJoinedAction)?.Invoke(player);
         }
 
         //// Needs change to which method it patches, because only works at first instance join for now.

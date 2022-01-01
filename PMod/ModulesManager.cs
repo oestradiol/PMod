@@ -19,20 +19,20 @@ namespace PMod
 			if (useOnInstanceChanged) ModulesManager.OnInstanceChanged += OnInstanceChanged;
 		}
 
-		internal virtual void OnUiManagerInit() { }
-		internal virtual void OnPreferencesSaved() { }
-		internal virtual void OnSceneWasLoaded(int buildIndex, string sceneName) { }
-		internal virtual void OnUpdate() { }
-		internal virtual void OnPlayerJoined(Player player) { }
-		internal virtual void OnPlayerLeft(Player player) { }
-		internal virtual void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) { }
+		protected virtual void OnUiManagerInit() { }
+		protected virtual void OnPreferencesSaved() { }
+		protected virtual void OnSceneWasLoaded(int buildIndex, string sceneName) { }
+		protected virtual void OnUpdate() { }
+		protected virtual void OnPlayerJoined(Player player) { }
+		protected virtual void OnPlayerLeft(Player player) { }
+		protected virtual void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) { }
 	}
 
 	internal static class ModulesManager
 	{
 		internal static AvatarFromID avatarFromID;
 		internal static CopyAsset copyAsset;
-		internal static ModsAllower emmAllower;
+		internal static ModsAllower modsAllower;
 		//internal static ForceClone forceClone;
 		internal static FrozenPlayersManager frozenPlayersManager;
 		internal static InvisibleJoin invisibleJoin;
@@ -53,18 +53,18 @@ namespace PMod
 
 		internal static void Initialize()
 		{
-			avatarFromID = new();
-			copyAsset = new();
-			emmAllower = new();
+			avatarFromID = new AvatarFromID();
+			copyAsset = new CopyAsset();
+			modsAllower = new ModsAllower();
 			//forceClone = new();
-			frozenPlayersManager = new();
-			invisibleJoin = new();
-			itemGrabber = new();
-			orbit = new();
-			photonFreeze = new();
-			softClone = new();
-			teleportToCursor = new();
-			triggers = new();
+			frozenPlayersManager = new FrozenPlayersManager();
+			invisibleJoin = new InvisibleJoin();
+			itemGrabber = new ItemGrabber();
+			orbit = new Orbit();
+			photonFreeze = new PhotonFreeze();
+			softClone = new SoftClone();
+			teleportToCursor = new TeleportToCursor();
+			triggers = new Triggers();
 		}
     }
 }

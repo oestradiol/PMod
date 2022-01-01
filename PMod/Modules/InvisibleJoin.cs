@@ -1,10 +1,10 @@
 ﻿// Please don't use this it's dangerous af lol u r gonna get banned XD // Also, why would u even use this? creep
 
+using System;
 using PMod.Utils;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Events;
 using Object = UnityEngine.Object;
 
 namespace PMod.Modules
@@ -12,8 +12,8 @@ namespace PMod.Modules
     internal class InvisibleJoin : ModuleBase
     {
         internal bool onceOnly = true;
-        internal MelonPreferences_Entry<bool> IsOn;
-        private Transform JoinButton;
+        internal readonly MelonPreferences_Entry<bool> IsOn;
+        private Transform _joinButton;
 
         internal InvisibleJoin()
         {
@@ -24,36 +24,36 @@ namespace PMod.Modules
             RegisterSubscriptions();
         }
 
-        internal override void OnUiManagerInit()
+        protected override void OnUiManagerInit()
         {
             if (!IsOn.Value) return;
             InstantiateJoinButton();
         }
 
-        internal override void OnPreferencesSaved()
+        protected override void OnPreferencesSaved()
         {
-            if (IsOn.Value)
-                if (JoinButton == null)
-                    InstantiateJoinButton();
-            else
-                Object.DestroyImmediate(JoinButton.gameObject);
+            var flag = _joinButton == null;
+            if (!IsOn.Value && !flag)
+                Object.DestroyImmediate(_joinButton.gameObject);
+            else if (flag)
+                InstantiateJoinButton();
         }
 
         private void InstantiateJoinButton()
         {
-            Transform ProgressPanel = GameObject.Find("UserInterface/MenuContent/Popups/LoadingPopup/ProgressPanel").transform;
-            Transform Parent_Loading_Progress = ProgressPanel.Find("Parent_Loading_Progress");
-            Transform GoButton = Parent_Loading_Progress.Find("GoButton");
-            JoinButton = Object.Instantiate(GoButton, ProgressPanel);
-            Parent_Loading_Progress.localPosition = new Vector3(0, 17, 0);
-            JoinButton.localPosition = new Vector3(-2.4f, -124f, 0);
-            JoinButton.GetComponentInChildren<Text>().text = "Join Invisible";
-            Button join = JoinButton.GetComponent<Button>();
+            var progressPanel = GameObject.Find("UserInterface/MenuContent/Popups/LoadingPopup/ProgressPanel").transform;
+            var parentLoadingProgress = progressPanel.Find("Parent_Loading_Progress");
+            var goButton = parentLoadingProgress.Find("GoButton");
+            _joinButton = Object.Instantiate(goButton, progressPanel);
+            parentLoadingProgress.localPosition = new Vector3(0, 17, 0);
+            _joinButton.localPosition = new Vector3(-2.4f, -124f, 0);
+            _joinButton.GetComponentInChildren<Text>().text = "Join Invisible";
+            var join = _joinButton.GetComponent<Button>();
             join.onClick = new Button.ButtonClickedEvent();
-            join.GetComponent<Button>().onClick.AddListener((UnityAction)(() =>
+            join.GetComponent<Button>().onClick.AddListener(new Action(() =>
             {
                 NativePatches.triggerInvisible = true;
-                GoButton.GetComponent<Button>().onClick.Invoke();
+                goButton.GetComponent<Button>().onClick.Invoke();
             }));
             join.interactable = true;
         }
@@ -62,7 +62,7 @@ namespace PMod.Modules
         {
             onceOnly = !alwaysInvisible;
             NativePatches.triggerInvisible = alwaysInvisible;
-            JoinButton.gameObject.SetActive(!alwaysInvisible);
+            _joinButton.gameObject.SetActive(!alwaysInvisible);
         }
     }
 }
