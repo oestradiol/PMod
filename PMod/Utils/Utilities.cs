@@ -179,32 +179,34 @@ namespace PMod.Utils
 
     internal class Timer
     {
+        private bool _isFrozen;
         private Stopwatch _timer;
         internal GameObject text;
-        internal bool IsFrozen;
 
         internal Timer()
         {
-            IsFrozen = true;
+            _isFrozen = true;
             RestartTimer();
         }
+
+        private void NametagSet() { if (text != null) text.SetActive(_isFrozen); }
 
         internal void RestartTimer()
         {
             _timer = Stopwatch.StartNew();
-            if (IsFrozen) MelonCoroutines.Start(Checker());
+            if (_isFrozen) MelonCoroutines.Start(Checker());
         }
 
         private IEnumerator Checker()
         {
-            IsFrozen = false;
-            ModulesManager.frozenPlayersManager.NametagSet(this);
+            _isFrozen = false;
+            NametagSet();
 
             while (_timer.ElapsedMilliseconds <= 1000)
                 yield return null;
 
-            IsFrozen = true;
-            ModulesManager.frozenPlayersManager.NametagSet(this);
+            _isFrozen = true;
+            NametagSet();
         }
     }
 

@@ -1,11 +1,11 @@
 ﻿using PMod.Utils;
+using System.Linq;
 using System.Collections.Generic;
+using MelonLoader;
 using UnityEngine;
 using TMPro;
 using VRC;
 using Object = UnityEngine.Object;
-using MelonLoader;
-using System.Linq;
 
 namespace PMod.Modules
 {
@@ -38,7 +38,5 @@ namespace PMod.Modules
         }
 
         protected override void OnPlayerLeft(Player player) => EntryDict.Remove(player.prop_APIUser_0.id);
-
-        internal void NametagSet(Timer entry) { try { entry.text?.SetActive(entry.IsFrozen); } catch { } }
     }
 }

@@ -1,7 +1,7 @@
 ﻿// Please don't use this it's dangerous af lol u r gonna get banned XD // Also, why would u even use this? creep
 
-using System;
 using PMod.Utils;
+using System;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.UI;
@@ -52,8 +52,18 @@ namespace PMod.Modules
             join.onClick = new Button.ButtonClickedEvent();
             join.GetComponent<Button>().onClick.AddListener(new Action(() =>
             {
-                NativePatches.triggerInvisible = true;
-                goButton.GetComponent<Button>().onClick.Invoke();
+                DelegateMethods.PopupV2(
+                    "Invisible Join",
+                    "Warning!! This function HAS been patched by VRChat.\nYou can still join invisible, " +
+                    "but you WILL be flagged, and much probably either banned or at least lose Trust.\n" +
+                    "Click X to cancel (top right). Are you sure you want to continue?",
+                    "Yes, I'm monkee. Continue.",
+                    new Action(() =>
+                    {
+                        NativePatches.triggerInvisible = true;
+                        VRCUiManager.prop_VRCUiManager_0.HideScreen("POPUP");
+                        goButton.GetComponent<Button>().onClick.Invoke();
+                    }));
             }));
             join.interactable = true;
         }

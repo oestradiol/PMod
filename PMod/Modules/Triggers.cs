@@ -1,9 +1,9 @@
 ﻿using PMod.Utils;
 using System;
 using MelonLoader;
-using UIExpansionKit.API;
-using VRC.SDKBase;
 using UnityEngine;
+using VRC.SDKBase;
+using UIExpansionKit.API;
 
 namespace PMod.Modules
 {

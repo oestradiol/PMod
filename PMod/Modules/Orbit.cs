@@ -1,5 +1,4 @@
 ﻿using PMod.Utils;
-using System.Linq;
 using System.Collections.Generic;
 using MelonLoader;
 using UnityEngine;
@@ -74,24 +73,22 @@ namespace PMod.Modules
 
         protected override void OnUpdate()
         {
-            if (_pickupOrbits != null && _currentPlayer != null)
+            if (_pickupOrbits == null || _currentPlayer == null) return;
+            Timer += Time.deltaTime;
+            OrbitCenter = GetCenter();
+            foreach (var pickupOrbit in _pickupOrbits)
             {
-                OrbitCenter = GetCenter();
-                foreach (var pickupOrbit in _pickupOrbits)
+                var key = pickupOrbit.Key;
+                var value = pickupOrbit.Value;
+                if (key == null)
+                    _pickupOrbits.Remove(key);
+                else
                 {
-                    var key = pickupOrbit.Key;
-                    var value = pickupOrbit.Value;
-                    if (key == null)
-                        _pickupOrbits.Remove(key);
-                    else
-                    {
-                        if (_patch.Value) Patch(key);
-                        key.transform.position = value.CurrentPos();
-                        key.transform.rotation = value.CurrentRot();
-                    }
+                    if (_patch.Value) Patch(key);
+                    key.transform.position = value.CurrentPos();
+                    key.transform.rotation = value.CurrentRot();
                 }
             }
-            Timer += Time.deltaTime;
         }
 
         protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => StopOrbit();
@@ -110,11 +107,12 @@ namespace PMod.Modules
 
         private void ToOrbit(VRCPlayer player)
         {
-            if (_currentPlayer != null) StopOrbit();
+            StopOrbit();
             _currentPlayer = player;
             Timer = 0f;
             var pickups = Object.FindObjectsOfType<VRC_Pickup>();
             OrbitCenter = GetCenter();
+            _pickupOrbits = new Dictionary<VRC_Pickup, OrbitItem>();
             for (var i = 0; i < pickups.Count; i++)
                 _pickupOrbits.Add(pickups[i], new OrbitItem(pickups, i));
         }
@@ -134,6 +132,7 @@ namespace PMod.Modules
             }
             _pickupOrbits = null;
             _currentPlayer = null;
+            Timer = 0;
         }
 
         private static void Patch(VRC_Pickup item)
