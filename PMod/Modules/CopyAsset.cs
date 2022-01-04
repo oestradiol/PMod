@@ -8,8 +8,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using MelonLoader;
-using UnityEngine;
-using UnityEngine.UI;
 using VRC.Core;
 
 namespace PMod.Modules
@@ -17,8 +15,6 @@ namespace PMod.Modules
     internal class CopyAsset : ModuleBase
     {
         private readonly MelonPreferences_Entry<string> _toPath;
-
-        private VRC.UI.Elements.Menus.SelectedUserMenuQM _selectedUserMenuQm;
 
         internal CopyAsset()
         {
@@ -28,22 +24,12 @@ namespace PMod.Modules
             RegisterSubscriptions();
         }
 
-        protected override void OnUiManagerInit()
-        {
-            _selectedUserMenuQm = Resources.FindObjectsOfTypeAll<VRC.UI.Elements.Menus.SelectedUserMenuQM>()[1];
-            var addToFavoritesButton = _selectedUserMenuQm.transform.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_AvatarActions/Button_AddToFavorites");
-            var copyAssetButton = UnityEngine.Object.Instantiate(addToFavoritesButton, addToFavoritesButton.parent.parent.Find("Buttons_UserActions")).GetComponent<Button>();
-            UnityEngine.Object.DestroyImmediate(copyAssetButton.transform.Find("Favorite Disabled Button").gameObject);
-            copyAssetButton.onClick = new Button.ButtonClickedEvent();
-            copyAssetButton.onClick.AddListener(new Action(_CopyAsset));
-            copyAssetButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Copy Asset";
-            copyAssetButton.GetComponent<VRC.UI.Elements.Tooltips.UiTooltip>().field_Public_String_0 = "Copies the asset file to the destined folder.";
-            copyAssetButton.name = "Button_CopyAssetButton";
-        }
+        protected override void OnUiManagerInit() =>
+            Utilities.CreateButton(Utilities.Menu.InteractMenu, "Copy Asset", "Copies the asset file to the destined folder.", _CopyAsset);
 
         private void _CopyAsset()
         {
-            var avatar = Utilities.GetPlayerFromID(_selectedUserMenuQm.field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
+            var avatar = Utilities.GetPlayerFromID(Utilities.SelectedUserMenuQm.GetComponent<VRC.UI.Elements.Menus.SelectedUserMenuQM>().field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
             if (!Directory.Exists(_toPath.Value)) Directory.CreateDirectory(_toPath.Value);
             try
             {

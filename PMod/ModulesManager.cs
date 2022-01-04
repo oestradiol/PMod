@@ -35,7 +35,7 @@ namespace PMod
 		internal static ModsAllower modsAllower;
 		//internal static ForceClone forceClone;
 		internal static FrozenPlayersManager frozenPlayersManager;
-		internal static InvisibleJoin invisibleJoin;
+		// internal static InvisibleJoin invisibleJoin;
 		internal static ItemGrabber itemGrabber;
 		internal static Orbit orbit;
 		internal static PhotonFreeze photonFreeze;
@@ -58,7 +58,7 @@ namespace PMod
 			modsAllower = new ModsAllower();
 			//forceClone = new();
 			frozenPlayersManager = new FrozenPlayersManager();
-			invisibleJoin = new InvisibleJoin();
+			// invisibleJoin = new InvisibleJoin();
 			itemGrabber = new ItemGrabber();
 			orbit = new Orbit();
 			photonFreeze = new PhotonFreeze();

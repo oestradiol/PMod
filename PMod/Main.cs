@@ -39,8 +39,8 @@ namespace PMod
                 ClientMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
                 ClientMenu.AddSimpleButton("Close Menu", ClientMenu.Hide);
                 //ClientMenu.AddSimpleButton("Beep", () => SendRPC("GetBeepedLol"));
-                if (ModulesManager.invisibleJoin.IsOn.Value)
-                    ClientMenu.AddToggleButton("Always Join Invisible?", isOn => ModulesManager.invisibleJoin.SetJoinMode(isOn), () => !ModulesManager.invisibleJoin.onceOnly);
+                //if (ModulesManager.invisibleJoin.IsOn.Value)
+                //    ClientMenu.AddToggleButton("Always Join Invisible?", isOn => ModulesManager.invisibleJoin.SetJoinMode(isOn), () => !ModulesManager.invisibleJoin.onceOnly);
                 ClientMenu.AddSimpleButton("Orbit", () =>
                 {
                     if (ModulesManager.orbit.IsOn.Value) ModulesManager.orbit.OrbitMenu.Show();
