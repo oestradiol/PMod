@@ -1,9 +1,7 @@
 ﻿using PMod.Utils;
 using PMod.Loader;
 using System;
-using System.Linq;
 using System.Reflection;
-using MelonLoader;
 using UIExpansionKit.API;
 using VRC;
 using VRC.Core;
@@ -20,21 +18,17 @@ namespace PMod
     {
         public const string Name = "PMod";
         public const string Author = "Davi, Lily, Arion";
-        public const string Version = "1.3.3";
+        public const string Version = "1.4.0";
     }
 
     public static class Main
     {
-        internal static HarmonyLib.Harmony HInstance => MelonHandler.Mods.First(m => m.Info.Name == LInfo.Name).HarmonyInstance;
         internal static ICustomShowableLayoutedMenu ClientMenu;
 
         public static void OnApplicationStart()
         {
-            NetworkEvents.OnPlayerJoinedAction += OnPlayerJoined;
-            NetworkEvents.OnPlayerLeftAction += OnPlayerLeft;
-            NetworkEvents.OnInstanceChangedAction += OnInstanceChanged;
             ModulesManager.Initialize();
-            NativePatches.OnApplicationStart();
+            Patches.OnApplicationStart();
             PLogger.Msg(ConsoleColor.Green, $"{BuildInfo.Name} Loaded Successfully!");
         }
         public static void VRChat_OnUiManagerInit()
@@ -46,7 +40,7 @@ namespace PMod
                 ClientMenu.AddSimpleButton("Close Menu", ClientMenu.Hide);
                 //ClientMenu.AddSimpleButton("Beep", () => SendRPC("GetBeepedLol"));
                 if (ModulesManager.invisibleJoin.IsOn.Value)
-                    ClientMenu.AddToggleButton("Always Join Invisible?", (isOn) => ModulesManager.invisibleJoin.SetJoinMode(isOn), () => !ModulesManager.invisibleJoin.onceOnly);
+                    ClientMenu.AddToggleButton("Always Join Invisible?", isOn => ModulesManager.invisibleJoin.SetJoinMode(isOn), () => !ModulesManager.invisibleJoin.onceOnly);
                 ClientMenu.AddSimpleButton("Orbit", () =>
                 {
                     if (ModulesManager.orbit.IsOn.Value) ModulesManager.orbit.OrbitMenu.Show();

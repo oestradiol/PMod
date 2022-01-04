@@ -60,7 +60,7 @@ namespace PMod.Modules
                     "Yes, I'm monkee. Continue.",
                     new Action(() =>
                     {
-                        NativePatches.triggerInvisible = true;
+                        Patches.triggerInvisible = true;
                         VRCUiManager.prop_VRCUiManager_0.HideScreen("POPUP");
                         goButton.GetComponent<Button>().onClick.Invoke();
                     }));
@@ -71,7 +71,7 @@ namespace PMod.Modules
         internal void SetJoinMode(bool alwaysInvisible)
         {
             onceOnly = !alwaysInvisible;
-            NativePatches.triggerInvisible = alwaysInvisible;
+            Patches.triggerInvisible = alwaysInvisible;
             _joinButton.gameObject.SetActive(!alwaysInvisible);
         }
     }

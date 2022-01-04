@@ -26,7 +26,7 @@ namespace PMod.Loader
         // Loader info
         public const string Name = "PMod.Loader";
         public const string Author = "Davi";
-        public const string Version = "1.0.5";
+        public const string Version = "1.0.6";
 
         // PMod info
         internal const string ModName = "PMod";

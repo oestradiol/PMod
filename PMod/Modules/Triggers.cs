@@ -65,7 +65,7 @@ namespace PMod.Modules
             triggerMenu.AddSimpleButton("Go back", ShowTriggersMenu);
             foreach (var @event in trigger.Triggers) triggerMenu.AddSimpleButton(@event.Name, () => 
             { 
-                NativePatches.triggerOnceLtg |= _isForceGlobal;
+                Patches.triggerOnceLtg |= _isForceGlobal;
                 trigger.ExecuteTrigger?.Invoke(@event);
             });
             triggerMenu.Show();

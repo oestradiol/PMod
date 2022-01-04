@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -8,13 +6,11 @@ using Il2CppSystem.Collections.Generic;
 using UnhollowerRuntimeLib.XrefScans;
 using MelonLoader;
 using MonoMod.Utils;
-using UnhollowerBaseLib;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC;
 using VRC.Core;
 using VRC.SDKBase;
-using VRC.UI;
 
 namespace PMod.Utils
 {
@@ -83,8 +79,7 @@ namespace PMod.Utils
 
     internal static class DelegateMethods
     {
-        private delegate void PopupV2Delegate(string title, string body, string submitButtonText, Il2CppSystem.Action submitButtonAction, Il2CppSystem.Action<VRCUiPopup> additionalSetup = null);
-        private static PopupV2Delegate _popupV2Delegate;
+        private static Delegate _popupV2Delegate;
         internal static void PopupV2(string title, string body, string submitButtonText, Il2CppSystem.Action submitButtonAction) =>
             (_popupV2Delegate ??= typeof(VRCUiPopupManager)
                 .GetMethods().First(methodBase => 
@@ -92,17 +87,15 @@ namespace PMod.Utils
                     !methodBase.Name.Contains("PDM") &&
                     Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/StandardPopupV2") &&
                     Utilities.WasUsedBy(methodBase, "OpenSaveSearchPopup"))
-                .CreateDelegate<PopupV2Delegate>(VRCUiPopupManager.prop_VRCUiPopupManager_0))(title, body, submitButtonText, submitButtonAction);
+                .GetDelegateForMethodInfo()).DynamicInvoke(VRCUiPopupManager.prop_VRCUiPopupManager_0, title, body, submitButtonText, submitButtonAction, null);
 
-        private delegate void InputPopupDelegate(string title, string body, InputField.InputType inputType, bool useNumericKeypad, string submitButtonText, Il2CppSystem.Action<string, List<KeyCode>, Text> submitButtonAction,
-            Il2CppSystem.Action cancelButtonAction, string placeholderText = "Enter text....", bool hidePopupOnSubmit = true, Il2CppSystem.Action<VRCUiPopup> additionalSetup = null, bool param11 = false, int param12 = 0);
-        private static InputPopupDelegate _inputPopupDelegate;
+        private static Delegate _inputPopupDelegate;
         internal static void InputPopup(string title, string submitButtonText, Il2CppSystem.Action<string, List<KeyCode>, Text> submitButtonAction, string placeholderText = "Enter text....",
             bool useNumericKeypad = false, Il2CppSystem.Action cancelButtonAction = null, string body = null, InputField.InputType inputType = InputField.InputType.Standard) => // Extra shit
             (_inputPopupDelegate ??= typeof(VRCUiPopupManager).GetMethods().First(methodBase =>
                 methodBase.Name.StartsWith("Method_Public_Void_String_String_InputType_Boolean_String_Action_3_String_List_1_KeyCode_Text_Action_String_Boolean_Action_1_VRCUiPopup_Boolean_Int32_") &&
-                !methodBase.Name.Contains("PDM") && Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/InputPopup"))
-            .CreateDelegate<InputPopupDelegate>(VRCUiPopupManager.prop_VRCUiPopupManager_0))(title, body, inputType, useNumericKeypad, submitButtonText, submitButtonAction, cancelButtonAction, placeholderText);
+                !methodBase.Name.Contains("PDM") && Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/InputPopup")).GetDelegateForMethodInfo())
+            .DynamicInvoke(VRCUiPopupManager.prop_VRCUiPopupManager_0, title, body, inputType, useNumericKeypad, submitButtonText, submitButtonAction, cancelButtonAction, placeholderText, true, null, false, 0);
 
         private static Func<int, Player> _playerFromPhotonIDMethod;
         internal static Player GetPlayerFromPhotonID(int id) =>
@@ -174,39 +167,6 @@ namespace PMod.Utils
         {
             var angle = (float)(ModulesManager.orbit.Timer * 50f * ModulesManager.orbit.speed.Value + 2 * Math.PI * _index);
             return IsOn ? Quaternion.Euler(-angle, 0, -angle) : _initialRot;
-        }
-    }
-
-    internal class Timer
-    {
-        private bool _isFrozen;
-        private Stopwatch _timer;
-        internal GameObject text;
-
-        internal Timer()
-        {
-            _isFrozen = true;
-            RestartTimer();
-        }
-
-        private void NametagSet() { if (text != null) text.SetActive(_isFrozen); }
-
-        internal void RestartTimer()
-        {
-            _timer = Stopwatch.StartNew();
-            if (_isFrozen) MelonCoroutines.Start(Checker());
-        }
-
-        private IEnumerator Checker()
-        {
-            _isFrozen = false;
-            NametagSet();
-
-            while (_timer.ElapsedMilliseconds <= 1000)
-                yield return null;
-
-            _isFrozen = true;
-            NametagSet();
         }
     }
 
