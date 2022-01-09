@@ -198,9 +198,9 @@ namespace PMod.Utils
             _onEventDelegate.DynamicInvoke(instancePtr, eventDataPtr, nativeMethodInfoPtr);
         }
 
-        // Please don't use InvisibleJoin, it's dangerous af lol u r gonna get banned XD // Also, why would u even use this? creep
+        // Please don't use InvisibleJoin, it's dangerous af lol u r gonna get banned XD // Also, why would u even use this? creep // Deactivated.
         private static Il2CppSystem.Object _lastSent;
-        internal static bool triggerInvisible;
+        //internal static bool triggerInvisible;
         private static bool RaiseEventSetup(IntPtr instancePtr, byte eType, IntPtr objPtr, IntPtr eOptions, SendOptions sOptions, IntPtr nativeMethodInfoPtr)
         {
             object @return = null;
