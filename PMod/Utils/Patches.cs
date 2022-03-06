@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UnhollowerBaseLib;
@@ -26,7 +25,6 @@ namespace PMod.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Type MakeNewCustomDelegate(this Type[] types) => InternalMakeNewCustomDelegate(types);
 
-
         private static readonly System.Collections.Hashtable CachedDelegates = new();
         internal static Delegate GetDelegateForMethodInfo(this MethodInfo methodInfo)
         {
@@ -38,23 +36,12 @@ namespace PMod.Utils
                 return (Delegate)CachedDelegates[methodInfo.MetadataToken];
             }
             
-            // DynamicMethod creation
-            var retType = methodInfo.ReturnType;
-            var decType = methodInfo.DeclaringType;
+            // Type[] creation
             var args = methodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
-            var paramTypes = methodInfo.IsStatic ? args : QueuePush(decType, args); // decType shouldn't be null if Non-Static
-            var dynMethod = decType == null ? new DynamicMethod(methodInfo.Name, retType, paramTypes) : 
-                new DynamicMethod(methodInfo.Name, retType, paramTypes, decType);
-            
-            // IL Generation
-            var il = dynMethod.GetILGenerator();
-            for (var i = 0; i < paramTypes.Length; i++)
-                il.Emit(OpCodes.Ldarg, i);
-            il.Emit(OpCodes.Call, methodInfo);
-            il.Emit(OpCodes.Ret);
-            
+            var paramTypes = methodInfo.IsStatic ? args : QueuePush(methodInfo.DeclaringType, args); // decType shouldn't be null if Non-Static
+
             // Delegate type creation
-            var del = dynMethod.CreateDelegate(StackPush(paramTypes, retType).MakeNewCustomDelegate());
+            var del = methodInfo.CreateDelegate(StackPush(paramTypes, methodInfo.ReturnType).MakeNewCustomDelegate());
             CachedDelegates.Add(methodInfo.MetadataToken, del);
             return del;
         }
@@ -78,7 +65,7 @@ namespace PMod.Utils
     internal static class NativePatchUtils // Used my own custom extension methods: https://gist.github.com/d-magit/b760d1580ed77a03843e168e182a4ff6
     {
         internal static Delegate Patch(MethodInfo originalMethod, IntPtr patchDetour) =>
-            Patch(originalMethod, patchDetour, originalMethod.GetIl2CppTypeArr().MakeNewCustomDelegate());
+            Patch(originalMethod, patchDetour, originalMethod.GetTypeArr().MakeNewCustomDelegate());
         //internal static TDelegate Patch<TDelegate>(MethodBase originalMethod, IntPtr patchDetour) where TDelegate : Delegate => 
         //    (TDelegate)Patch(originalMethod, patchDetour, typeof(TDelegate));
         private static unsafe Delegate Patch(MethodBase originalMethod, IntPtr patchDetour, Type delType)
@@ -95,7 +82,7 @@ namespace PMod.Utils
         internal static T TryGetIl2CppPtrToObj<T>(this IntPtr ptr)
         { try { return UnhollowerSupport.Il2CppObjectPtrToIl2CppObject<T>(ptr); } catch { return default; } }
 
-        private static Type[] GetIl2CppTypeArr(this MethodInfo methodInfo)
+        private static Type[] GetTypeArr(this MethodInfo methodInfo)
         {
             var args = methodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
             return DelegateExtensions.StackPush(
@@ -130,7 +117,7 @@ namespace PMod.Utils
                 .GetMethod(nameof(VRC_EventHandler.InternalTriggerEvent)),
                 NativePatchUtils.GetDetour<Patches>(nameof(TriggerEventSetup)));
             
-            // Search for an alternative method to hook safely to OnPlayerJoin
+            // TODO: Search for an alternative method to hook safely to OnPlayerJoin
             // void ApplyPatch(MethodInfo mInfo, bool isJoin)
             // {
             //     PlayerActionDelegate tempMethod, originalMethod = null;
@@ -222,7 +209,7 @@ namespace PMod.Utils
                         PLogger.Error($"{e}");
                     }
                     break;
-                case 202: // InvisibleJoin // Update: Deactivating because fuck this
+                // case 202: // InvisibleJoin // Update: Deactivating because fuck this
                     // try
                     // {
                     //     if (!triggerInvisible) break;
@@ -239,7 +226,7 @@ namespace PMod.Utils
                     //     PLogger.Warning("Something went wrong in RaiseEvent202 Detour (InvisibleJoinSetup)");
                     //     PLogger.Error($"{e}");
                     // }
-                    break;
+                    // break;
             }
             return (bool)(@return ?? _raiseEventDelegate.DynamicInvoke(instancePtr, eType, objPtr, eOptions, sOptions, nativeMethodInfoPtr));
         }

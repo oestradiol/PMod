@@ -63,8 +63,7 @@ namespace PMod.Utils
         internal enum Menu { InteractMenu }
         internal static Button CreateButton(Menu menu, string uiButtonText, string uiTooltip, Action onClick) => CreateButton(menu switch
             {
-                Menu.InteractMenu =>
-                    SelectedUserMenuQm.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_UserActions"),
+                Menu.InteractMenu => SelectedUserMenuQm.Find("ScrollRect/Viewport/VerticalLayoutGroup/Buttons_UserActions"),
                 _ => throw new ArgumentException("Menu not found.", nameof(menu))
             }, uiButtonText, uiTooltip, onClick);
         internal static Button CreateButton(Transform parent, string uiButtonText, string uiTooltip, Action onClick)

@@ -33,7 +33,7 @@ namespace PMod
 		internal static AvatarFromID avatarFromID;
 		internal static CopyAsset copyAsset;
 		internal static ModsAllower modsAllower;
-		//internal static ForceClone forceClone;
+		// internal static ForceClone forceClone;
 		internal static FrozenPlayersManager frozenPlayersManager;
 		// internal static InvisibleJoin invisibleJoin;
 		internal static ItemGrabber itemGrabber;
@@ -56,7 +56,7 @@ namespace PMod
 			avatarFromID = new AvatarFromID();
 			copyAsset = new CopyAsset();
 			modsAllower = new ModsAllower();
-			//forceClone = new();
+			// forceClone = new();
 			frozenPlayersManager = new FrozenPlayersManager();
 			// invisibleJoin = new InvisibleJoin();
 			itemGrabber = new ItemGrabber();
