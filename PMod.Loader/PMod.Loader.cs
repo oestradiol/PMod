@@ -89,7 +89,7 @@ public class PModLoader : MelonMod
 
     private static Assembly GetPModAssembly()
     {
-        byte[] bytes;
+        byte[] bytes = null;
         try
         {
             Logger.Msg(ConsoleColor.Blue, "Attempting to load PMod latest version...");
