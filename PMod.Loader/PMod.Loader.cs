@@ -111,14 +111,14 @@ public class PModLoader : MelonMod
             return assembly;
         }
         
-        if (!File.Exists($"{LInfo.ModName}.dll"))
+        if (File.Exists($"{LInfo.ModName}.dll"))
         {
-            Logger.Warning("All attempts to load the assembly failed. PMod won't load.");
-            return null;
+            Logger.Msg(ConsoleColor.Green, $"Found {LInfo.ModName}.dll in VRChat folder! Attempting to load it as a last resource...");
+            return Assembly.Load(File.ReadAllBytes($"{LInfo.ModName}.dll"));
         }
         
-        Logger.Msg(ConsoleColor.Green, $"Found {LInfo.ModName}.dll in VRChat folder! Attempting to load it as a last resource...");
-        return Assembly.Load(File.ReadAllBytes($"{LInfo.ModName}.dll"));
+        Logger.Warning("All attempts to load the assembly failed. PMod won't load.");
+        return null;
     }
     #endregion
     
