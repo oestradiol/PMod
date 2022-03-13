@@ -25,15 +25,17 @@ namespace PMod.Loader;
 
 public static class LInfo
 {
+    // General Info
+    public const ConsoleColor MelonColor = ConsoleColor.DarkMagenta;
+    internal const string MainLink = "https://davi.codes/vrchat/";
+    
     // Loader info
     public const string Name = "PMod.Loader";
     public const string Author = "Davi";
     public const string Version = "1.0.7";
-    public const ConsoleColor MelonColor = ConsoleColor.DarkMagenta;
 
     // PMod info
     internal const string ModName = "PMod";
-    internal const string MainLink = "https://davi.codes/vrchat/";
 }
 #endregion
 

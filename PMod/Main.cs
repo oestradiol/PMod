@@ -32,7 +32,7 @@ public static class Main
     {
         ModulesManager.Initialize();
         Patches.OnApplicationStart();
-        Logger.Msg(ConsoleColor.Green, $"{BuildInfo.Name} Loaded Successfully!");
+        Logger.Msg(ConsoleColor.Green, "Loaded Successfully!");
     }
     public static void VRChat_OnUiManagerInit()
     {
