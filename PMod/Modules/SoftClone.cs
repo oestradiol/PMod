@@ -35,7 +35,7 @@ namespace PMod.Modules
             var targetID = UserSelectionManager.field_Private_Static_UserSelectionManager_0.field_Private_APIUser_1.id;
             if (targetID == null)
             {
-                Loader.PLogger.Warning("Selected player was invalid! Failed to local clone.");
+                Main.Logger.Warning("Selected player was invalid! Failed to local clone.");
                 return;
             }
 

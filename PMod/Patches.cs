@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UnhollowerBaseLib;
 using MelonLoader;
@@ -11,57 +10,10 @@ using VRC.SDKBase;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
 using HarmonyLib;
+using Utilities = PMod.Utils.Utilities;
 
-// ReSharper disable CollectionNeverUpdated.Local
-
-namespace PMod.Utils
-{ 
-    internal static class DelegateExtensions // Used my own custom extension methods: https://gist.github.com/d-magit/d9cf4a02d6591746f7fe9c2c2a0c0b3f
-    {
-        private static readonly Func<Type[], Type> InternalMakeNewCustomDelegate = 
-            (Func<Type[],Type>)Delegate.CreateDelegate(typeof(Func<Type[],Type>), 
-                typeof(System.Linq.Expressions.Expression).Assembly.GetType("System.Linq.Expressions.Compiler.DelegateHelpers")
-                    .GetMethod("MakeNewCustomDelegate", BindingFlags.NonPublic | BindingFlags.Static)!); //Linq should be loaded by default so this shouldn't be null.
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Type MakeNewCustomDelegate(this Type[] types) => InternalMakeNewCustomDelegate(types);
-
-        private static readonly System.Collections.Hashtable CachedDelegates = new();
-        internal static Delegate GetDelegateForMethodInfo(this MethodInfo methodInfo)
-        {
-            // Cache checking
-            var isCached = CachedDelegates.Contains(methodInfo.MetadataToken);
-            if (isCached)
-            {
-                Console.WriteLine($"Found delegate for {methodInfo.Name} and token {methodInfo.MetadataToken}!");
-                return (Delegate)CachedDelegates[methodInfo.MetadataToken];
-            }
-            
-            // Type[] creation
-            var args = methodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
-            var paramTypes = methodInfo.IsStatic ? args : QueuePush(methodInfo.DeclaringType, args); // decType shouldn't be null if Non-Static
-
-            // Delegate type creation
-            var del = methodInfo.CreateDelegate(StackPush(paramTypes, methodInfo.ReturnType).MakeNewCustomDelegate());
-            CachedDelegates.Add(methodInfo.MetadataToken, del);
-            return del;
-        }
-
-        internal static Type[] StackPush(Type[] parameters, Type ret)
-        {
-            var offset = parameters.Length;
-            Array.Resize(ref parameters, offset + 1);
-            parameters[offset] = ret;
-            return parameters;
-        }
-        internal static Type[] QueuePush(Type dec, params Type[] parameters)
-        {
-            var argsTypes = new Type[parameters.Length + 1];
-            parameters.CopyTo(argsTypes, 1);
-            argsTypes[0] = dec;
-            return argsTypes;
-        }
-    }
-    
+namespace PMod
+{
     internal static class NativePatchUtils // Used my own custom extension methods: https://gist.github.com/d-magit/b760d1580ed77a03843e168e182a4ff6
     {
         internal static Delegate Patch(MethodInfo originalMethod, IntPtr patchDetour) =>
@@ -101,7 +53,7 @@ namespace PMod.Utils
         internal static void OnApplicationStart()
         {
             _onEventDelegate = NativePatchUtils.Patch(typeof(VRCNetworkingClient)
-                .GetMethod(nameof(VRCNetworkingClient.OnEvent)),
+                    .GetMethod(nameof(VRCNetworkingClient.OnEvent)),
                 NativePatchUtils.GetDetour<Patches>(nameof(OnEventSetup)));
             
             // For some reason the function below doesn't break, but doesn't get called, no matter how I run the NativePatch, be it with my extensions or with Melon defaults, so I had to use Harmony...🤔
@@ -114,7 +66,7 @@ namespace PMod.Utils
                 NativePatchUtils.GetDetour<Patches>(nameof(RaiseEventSetup)));
 
             _triggerEventDelegate = NativePatchUtils.Patch(typeof(VRC_EventHandler)
-                .GetMethod(nameof(VRC_EventHandler.InternalTriggerEvent)),
+                    .GetMethod(nameof(VRC_EventHandler.InternalTriggerEvent)),
                 NativePatchUtils.GetDetour<Patches>(nameof(TriggerEventSetup)));
             
             // TODO: Search for an alternative method to hook safely to OnPlayerJoin
@@ -155,8 +107,8 @@ namespace PMod.Utils
                     }
                     catch (Exception e)
                     {
-                        PLogger.Warning("Something went wrong in OnEvent7 Detour (FrozenPlayersManager)");
-                        PLogger.Error($"{e}");
+                        Main.Logger.Warning("Something went wrong in OnEvent7 Detour (FrozenPlayersManager)");
+                        Main.Logger.Error($"{e}");
                     }
                     break;
                 case 253: // Thanks to Yui! <3
@@ -177,8 +129,8 @@ namespace PMod.Utils
                     }
                     catch (Exception e)
                     {
-                        PLogger.Warning("Something went wrong in OnEvent253 Detour (SoftClone)");
-                        PLogger.Error($"{e}");
+                        Main.Logger.Warning("Something went wrong in OnEvent253 Detour (SoftClone)");
+                        Main.Logger.Error($"{e}");
                     }
                     break;
             }
@@ -205,8 +157,8 @@ namespace PMod.Utils
                     }
                     catch (Exception e)
                     {
-                        PLogger.Warning("Something went wrong in RaiseEvent7 Detour (FreezeSetup)");
-                        PLogger.Error($"{e}");
+                        Main.Logger.Warning("Something went wrong in RaiseEvent7 Detour (FreezeSetup)");
+                        Main.Logger.Error($"{e}");
                     }
                     break;
                 // case 202: // InvisibleJoin // Update: Deactivating because fuck this
@@ -244,8 +196,8 @@ namespace PMod.Utils
             }
             catch (Exception e)
             {
-                PLogger.Warning("Something went wrong in LocalToGlobalSetup Detour");
-                PLogger.Error($"{e}");
+                Main.Logger.Warning("Something went wrong in LocalToGlobalSetup Detour");
+                Main.Logger.Error($"{e}");
             }
             _triggerEventDelegate.DynamicInvoke(instancePtr, eventPtr, broadcast, instigatorId, fastForward, nativeMethodInfoPtr);
         }

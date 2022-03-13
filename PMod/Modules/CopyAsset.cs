@@ -1,5 +1,4 @@
-﻿using PMod.Loader;
-using PMod.Utils;
+﻿using PMod.Utils;
 using System;
 using System.IO;
 using System.Text;
@@ -47,7 +46,7 @@ namespace PMod.Modules
                     $"Failed to copy avatar \"{avatar.name}\" :(\nIf you see this message, please send the devs your last Melon log.",
                     "Close",
                     new Action(() => { VRCUiManager.prop_VRCUiManager_0.HideScreen("POPUP"); }));
-                PLogger.Error(e);
+                Main.Logger.Error(e);
             }
         }
 

@@ -6,7 +6,7 @@
 	<VrcReferences>true</VrcReferences>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /c /f /y $(OutputPath)\$(AssemblyName).dll $(MelonManaged)\..\.." />
+    <Exec Command="cp $(OutputPath)$(AssemblyName).dll $(MelonManaged)\..\..\" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\PMod.Loader\PMod.Loader.csproj" />

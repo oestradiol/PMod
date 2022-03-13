@@ -1,5 +1,4 @@
-﻿using PMod.Loader;
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using MelonLoader;
@@ -135,7 +134,7 @@ namespace PMod.Modules
                 }
                 item.transform.position = Utilities.GetBoneTransform(Player.prop_Player_0, HumanBodyBones.Hips).position;
             }
-            catch (Exception e) { PLogger.Error($"Failed to grab item {item.name}! {e}"); }
+            catch (Exception e) { Main.Logger.Error($"Failed to grab item {item.name}! {e}"); }
         }
     }
 }

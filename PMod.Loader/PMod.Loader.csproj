@@ -6,6 +6,6 @@
 	<VrcReferences>true</VrcReferences>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /c /f /y $(OutputPath)\$(AssemblyName).dll $(MelonManaged)\..\..\Mods" />
+    <Exec Command="cp $(OutputPath)$(AssemblyName).dll $(MelonManaged)\..\..\Mods" />
   </Target>
 </Project>
