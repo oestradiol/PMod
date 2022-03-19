@@ -15,21 +15,20 @@ internal class Orbit : ModuleBase
 {
     private ICustomShowableLayoutedMenu _selectionMenu;
     private VRCPlayer _currentPlayer;
-    private readonly MelonPreferences_Entry<bool> _patch;
+    private MelonPreferences_Entry<bool> _patch;
     private Dictionary<VRC_Pickup, OrbitItem> _pickupOrbits;
 
-    internal readonly ICustomShowableLayoutedMenu OrbitMenu;
+    private ICustomShowableLayoutedMenu _orbitMenu;
     internal Quaternion rotation;
     internal Quaternion rotationy;
     internal Vector3 OrbitCenter;
     internal float PlayerHeight;
     internal float Timer;
-    internal readonly MelonPreferences_Entry<float> radius;
-    internal readonly MelonPreferences_Entry<float> speed;
-    private readonly MelonPreferences_Entry<float> _rotx;
-    private readonly MelonPreferences_Entry<float> _roty;
-    private readonly MelonPreferences_Entry<float> _rotz;
-    internal readonly MelonPreferences_Entry<bool> IsOn;
+    internal MelonPreferences_Entry<float> radius;
+    internal MelonPreferences_Entry<float> speed;
+    private MelonPreferences_Entry<float> _rotx;
+    private MelonPreferences_Entry<float> _roty;
+    private MelonPreferences_Entry<float> _rotz;
     internal RotType rotType;
     internal enum RotType
     {
@@ -38,30 +37,35 @@ internal class Orbit : ModuleBase
         SphericalRot,
     }
 
-    internal Orbit()
+    public Orbit() : base(false)
     {
-        MelonPreferences.CreateCategory("Orbit", "PM - Orbit");
-        IsOn = MelonPreferences.CreateEntry("Orbit", "IsOn", false, "Activate Mod? This is a risky function.");
-        radius = MelonPreferences.CreateEntry("Orbit", "Radius", 1.0f, "Radius");
-        speed = MelonPreferences.CreateEntry("Orbit", "Speed", 1.0f, "Speed");
-        _patch = MelonPreferences.CreateEntry("Orbit", "Patch", true, "Patch items on Orbit");
-        _rotx = MelonPreferences.CreateEntry("Orbit", "RotationX", 0.0f, "X Rotation");
-        _roty = MelonPreferences.CreateEntry("Orbit", "RotationY", 0.0f, "Y Rotation");
-        _rotz = MelonPreferences.CreateEntry("Orbit", "RotationZ", 0.0f, "Z Rotation");
-        OrbitMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
-        OrbitMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
-        OrbitMenu.AddSimpleButton("Stop Orbit", StopOrbit);
-        OrbitMenu.AddSimpleButton("Circular Orbit", () => SelectOrbit(RotType.CircularRot));
-        OrbitMenu.AddSimpleButton("Spherical Orbit", () => SelectOrbit(RotType.SphericalRot));
-        OrbitMenu.AddSimpleButton("Cylindrical Orbit", () => SelectOrbit(RotType.CylindricalRot));
-        OnPreferencesSaved();
+        useOnApplicationStart = true;
         useOnPreferencesSaved = true;
         useOnUiManagerInit = true;
         useOnUpdate = true;
         useOnInstanceChanged = true;
         useOnPlayerLeft = true;
         RegisterSubscriptions();
-    } 
+    }
+
+    protected override void OnApplicationStart()
+    {
+        MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
+        radius = MelonPreferences.CreateEntry(ThisModuleName, "Radius", 1.0f, "Radius");
+        speed = MelonPreferences.CreateEntry(ThisModuleName, "Speed", 1.0f, "Speed");
+        _patch = MelonPreferences.CreateEntry(ThisModuleName, "Patch", true, "Patch items on Orbit");
+        _rotx = MelonPreferences.CreateEntry(ThisModuleName, "RotationX", 0.0f, "X Rotation");
+        _roty = MelonPreferences.CreateEntry(ThisModuleName, "RotationY", 0.0f, "Y Rotation");
+        _rotz = MelonPreferences.CreateEntry(ThisModuleName, "RotationZ", 0.0f, "Z Rotation");
+        _orbitMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
+        _orbitMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
+        _orbitMenu.AddSimpleButton("Stop Orbit", StopOrbit);
+        _orbitMenu.AddSimpleButton("Circular Orbit", () => SelectOrbit(RotType.CircularRot));
+        _orbitMenu.AddSimpleButton("Spherical Orbit", () => SelectOrbit(RotType.SphericalRot));
+        _orbitMenu.AddSimpleButton("Cylindrical Orbit", () => SelectOrbit(RotType.CylindricalRot));
+        Main.ClientMenu.AddSimpleButton("Orbit", () => _orbitMenu.Show());
+        OnPreferencesSaved();
+    }
 
     protected sealed override void OnPreferencesSaved()
     {
@@ -97,7 +101,7 @@ internal class Orbit : ModuleBase
     {
         rotType = type;
         _selectionMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
-        _selectionMenu.AddSimpleButton("Go back", () => OrbitMenu.Show());
+        _selectionMenu.AddSimpleButton("Go back", () => _orbitMenu.Show());
         foreach (var player in Object.FindObjectsOfType<VRCPlayer>()) 
             _selectionMenu.AddSimpleButton($"{player.prop_Player_0.prop_APIUser_0.displayName}", () => ToOrbit(player));
         _selectionMenu.Show();
@@ -158,12 +162,9 @@ internal class Orbit : ModuleBase
     {
         var head = Utilities.GetBoneTransform(_currentPlayer.prop_Player_0, HumanBodyBones.Head).position;
         if (rotType == RotType.CircularRot) return head;
-        else
-        {
-            var pos = _currentPlayer.transform.position;
-            PlayerHeight = (head - pos).y;
-            return pos;
-        }
+        var pos = _currentPlayer.transform.position;
+        PlayerHeight = (head - pos).y;
+        return pos;
     }
 }
 
@@ -316,14 +317,13 @@ internal class Orbit : ModuleBase
 //         internal Orbit()
 //         {
 //             UnhollowerRuntimeLib.ClassInjector.RegisterTypeInIl2Cpp<OrbitItem>();
-//             MelonPreferences.CreateCategory("Orbit", "PM - Orbit");
-//             IsOn = MelonPreferences.CreateEntry("Orbit", "IsOn", false, "Activate Mod? This is a risky function.");
-//             _radius = MelonPreferences.CreateEntry("Orbit", "Radius", 1.0f, "Radius");
-//             _speed = MelonPreferences.CreateEntry("Orbit", "Speed", 1.0f, "Speed");
-//             _patch = MelonPreferences.CreateEntry("Orbit", "Patch", true, "Patch items on Orbit");
-//             _rotx = MelonPreferences.CreateEntry("Orbit", "RotationX", 0.0f, "X Rotation");
-//             _roty = MelonPreferences.CreateEntry("Orbit", "RotationY", 0.0f, "Y Rotation");
-//             _rotz = MelonPreferences.CreateEntry("Orbit", "RotationZ", 0.0f, "Z Rotation");
+//             MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
+//             _radius = MelonPreferences.CreateEntry(ThisModuleName, "Radius", 1.0f, "Radius");
+//             _speed = MelonPreferences.CreateEntry(ThisModuleName, "Speed", 1.0f, "Speed");
+//             _patch = MelonPreferences.CreateEntry(ThisModuleName, "Patch", true, "Patch items on Orbit");
+//             _rotx = MelonPreferences.CreateEntry(ThisModuleName, "RotationX", 0.0f, "X Rotation");
+//             _roty = MelonPreferences.CreateEntry(ThisModuleName, "RotationY", 0.0f, "Y Rotation");
+//             _rotz = MelonPreferences.CreateEntry(ThisModuleName, "RotationZ", 0.0f, "Z Rotation");
 //             OrbitMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
 //             OrbitMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
 //             OrbitMenu.AddSimpleButton("Stop Orbit", StopOrbit);

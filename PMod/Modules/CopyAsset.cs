@@ -13,14 +13,20 @@ namespace PMod.Modules;
 
 internal class CopyAsset : ModuleBase
 {
-    private readonly MelonPreferences_Entry<string> _toPath;
+    private MelonPreferences_Entry<string> _toPath;
 
-    internal CopyAsset()
+    public CopyAsset() : base(true)
     {
-        MelonPreferences.CreateCategory("CopyAsset", "PM - Copy Asset");
-        _toPath = MelonPreferences.CreateEntry("CopyAsset", "ToPath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
+        useOnApplicationStart = true;
         useOnUiManagerInit = true;
         RegisterSubscriptions();
+    }
+
+    protected override void OnApplicationStart()
+    {
+        MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
+        _toPath = MelonPreferences.CreateEntry(ThisModuleName, "ToPath", 
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
     }
 
     protected override void OnUiManagerInit() =>

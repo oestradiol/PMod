@@ -29,8 +29,8 @@
 
 //        internal ForceClone() // This is for PM not conflicting with RubyClient or ReMod
 //        {
-//            MelonPreferences.CreateCategory("ForceClone", "PM - Force Clone");
-//            IsOn = MelonPreferences.CreateEntry("ForceClone", "IsOn", true, "Activate Mod? (Disabling requires restart)");
+//            MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
+//            IsOn = MelonPreferences.CreateEntry(ThisModuleName, "IsOn", true, "Activate Mod? (Disabling requires restart)");
 //        }
 
 //        internal override void OnUiManagerInit()

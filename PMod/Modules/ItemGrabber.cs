@@ -13,29 +13,33 @@ namespace PMod.Modules;
 
 internal class ItemGrabber : ModuleBase
 {
-    private ICustomShowableLayoutedMenu _selectionMenu;
-    private VRC_Pickup[] _pickups;
     private readonly Dictionary<IntPtr, object[]> _previousStates = new();
-    private readonly MelonPreferences_Entry<float> _minDistance;
-    private readonly MelonPreferences_Entry<bool> _patchAll;
-    private readonly MelonPreferences_Entry<bool> _takeOwnership;
-    internal readonly ICustomShowableLayoutedMenu PickupMenu;
-    internal readonly MelonPreferences_Entry<bool> IsOn;
+    private ICustomShowableLayoutedMenu _selectionMenu;
+    private MelonPreferences_Entry<float> _minDistance;
+    private MelonPreferences_Entry<bool> _patchAll;
+    private MelonPreferences_Entry<bool> _takeOwnership;
+    private ICustomShowableLayoutedMenu _pickupMenu;
+    private VRC_Pickup[] _pickups;
 
-    internal ItemGrabber()
+    public ItemGrabber() : base(false)
     {
-        MelonPreferences.CreateCategory("ItemGrabber", "PM - Item Grabber");
-        IsOn = MelonPreferences.CreateEntry("ItemGrabber", "IsOn", false, "Activate Mod? This is a risky function.");
-        _minDistance = MelonPreferences.CreateEntry("ItemGrabber", "GrabDistance", -1.0f, "Distance (meters) for grabbing all, set to -1 for unlimited.");
-        _patchAll = MelonPreferences.CreateEntry("ItemGrabber", "PatchAllOnLoad", false, "Patch All on Scene Load");
-        _takeOwnership = MelonPreferences.CreateEntry("ItemGrabber", "TakeOwnership", true, "Take Ownership of Object on Grab");
-        PickupMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
-        PickupMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
-        PickupMenu.AddSimpleButton("Patch", () => Select("Patch"));
-        PickupMenu.AddSimpleButton("Unpatch", () => Select("Unpatch"));
-        PickupMenu.AddSimpleButton("Grab", () => Select("Grab"));
+        useOnApplicationStart = true;
         useOnSceneWasLoaded = true;
         RegisterSubscriptions();
+    }
+
+    protected override void OnApplicationStart()
+    {
+        MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
+        _minDistance = MelonPreferences.CreateEntry(ThisModuleName, "GrabDistance", -1.0f, "Distance (meters) for grabbing all, set to -1 for unlimited.");
+        _patchAll = MelonPreferences.CreateEntry(ThisModuleName, "PatchAllOnLoad", false, "Patch All on Scene Load");
+        _takeOwnership = MelonPreferences.CreateEntry(ThisModuleName, "TakeOwnership", true, "Take Ownership of Object on Grab");
+        _pickupMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
+        _pickupMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
+        _pickupMenu.AddSimpleButton("Patch", () => Select("Patch"));
+        _pickupMenu.AddSimpleButton("Unpatch", () => Select("Unpatch"));
+        _pickupMenu.AddSimpleButton("Grab", () => Select("Grab"));
+        Main.ClientMenu.AddSimpleButton("ItemGrabber", () => _pickupMenu.Show());
     }
 
     protected override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -48,7 +52,7 @@ internal class ItemGrabber : ModuleBase
     private void Select(string type)
     {
         _selectionMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
-        _selectionMenu.AddSimpleButton("Go back", () => PickupMenu.Show());
+        _selectionMenu.AddSimpleButton("Go back", () => _pickupMenu.Show());
         _pickups = Object.FindObjectsOfType<VRC_Pickup>();
         switch (type)
         {

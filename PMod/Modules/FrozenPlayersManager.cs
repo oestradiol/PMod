@@ -11,6 +11,34 @@ namespace PMod.Modules;
 
 internal class FrozenPlayersManager : ModuleBase
 {
+    internal readonly Dictionary<string, Timer> EntryDict = new();
+
+    public FrozenPlayersManager() : base(true)
+    {
+        useOnPlayerJoined = true;
+        useOnPlayerLeft = true;
+        RegisterSubscriptions();
+    }
+
+    protected override void OnPlayerJoined(Player player)
+    {
+        var id = player.prop_APIUser_0.id;
+        if (id == Utils.Utilities.GetLocalAPIUser().id) return;
+        Timer timer = new();
+        EntryDict.Add(id, timer);
+        var text = player.transform.Find("Player Nameplate/Canvas/Nameplate/Contents/Main/Text Container/Sub Text").gameObject;
+        timer.text = Object.Instantiate(text, text.transform.parent);
+        Object.DestroyImmediate(timer.text.transform.Find("Icon").gameObject);
+        var tm = timer.text.GetComponentInChildren<TextMeshProUGUI>();
+        tm.text = "Frozen";
+        tm.color = Color.cyan;
+        if (MelonHandler.Mods.Any(m => m.Info.Name.Contains("Mint")))
+            timer.text.transform.gameObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, 30);
+        timer.text.SetActive(false);
+    }
+
+    protected override void OnPlayerLeft(Player player) => EntryDict.Remove(player.prop_APIUser_0.id);
+    
     internal class Timer
     {
         private bool _isFrozen;
@@ -43,32 +71,4 @@ internal class FrozenPlayersManager : ModuleBase
             NametagSet();
         }
     }
-        
-    internal readonly Dictionary<string, Timer> EntryDict = new();
-
-    internal FrozenPlayersManager()
-    {
-        useOnPlayerJoined = true;
-        useOnPlayerLeft = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnPlayerJoined(Player player)
-    {
-        var id = player.prop_APIUser_0.id;
-        if (id == Utils.Utilities.GetLocalAPIUser().id) return;
-        Timer timer = new();
-        EntryDict.Add(id, timer);
-        var text = player.transform.Find("Player Nameplate/Canvas/Nameplate/Contents/Main/Text Container/Sub Text").gameObject;
-        timer.text = Object.Instantiate(text, text.transform.parent);
-        Object.DestroyImmediate(timer.text.transform.Find("Icon").gameObject);
-        var tm = timer.text.GetComponentInChildren<TextMeshProUGUI>();
-        tm.text = "Frozen";
-        tm.color = Color.cyan;
-        if (MelonHandler.Mods.Any(m => m.Info.Name.Contains("Mint")))
-            timer.text.transform.gameObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, 30);
-        timer.text.SetActive(false);
-    }
-
-    protected override void OnPlayerLeft(Player player) => EntryDict.Remove(player.prop_APIUser_0.id);
 }

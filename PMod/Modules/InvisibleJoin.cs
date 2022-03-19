@@ -12,13 +12,10 @@
 //     internal class InvisibleJoin : ModuleBase
 //     {
 //         internal bool onceOnly = true;
-//         internal readonly MelonPreferences_Entry<bool> IsOn;
 //         private Transform _joinButton;
 //
 //         internal InvisibleJoin()
 //         {
-//             MelonPreferences.CreateCategory("InvisibleJoin", "PM - Invisible Join");
-//             IsOn = MelonPreferences.CreateEntry("InvisibleJoin", "IsOn", false, "Activate Mod? This is a risky function.");
 //             useOnUiManagerInit = true;
 //             useOnPreferencesSaved = true;
 //             RegisterSubscriptions();

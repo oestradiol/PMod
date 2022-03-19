@@ -1,12 +1,15 @@
 using System;
 using System.Collections;
 using System.Linq;
+using System.Reflection;
+using HarmonyLib;
 using MelonLoader;
 using VRC;
+using VRC.Core;
 
 namespace PMod.Loader;
 
-internal static class UIXManager { public static void OnApplicationStart() => UIExpansionKit.API.ExpansionKitApi.OnUiManagerInit += PModLoader.VRChat_OnUiManagerInit; }
+internal static class UIXManager { public static void OnApplicationStart() => UIExpansionKit.API.ExpansionKitApi.OnUiManagerInit += CustomEvents.OnUiManagerInit; }
 
 internal static class CustomEvents
 {
@@ -27,8 +30,13 @@ internal static class CustomEvents
         }
     }
     
-    private static void OnUiManagerInit()
+    private static readonly HarmonyLib.Harmony HInstance = MelonHandler.Mods.First(m => m.Info.Name == LInfo.Name).HarmonyInstance;
+    private static void OnInstanceChangeMethod(ApiWorld __0, ApiWorldInstance __1) => PModLoader.OnInstanceChanged(__0, __1);
+    internal static void OnUiManagerInit()
     {
+        HInstance.Patch(typeof(RoomManager)
+                .GetMethod(nameof(RoomManager.Method_Public_Static_Boolean_ApiWorld_ApiWorldInstance_String_Int32_0)),
+            null, new HarmonyMethod(typeof(CustomEvents).GetMethod(nameof(OnInstanceChangeMethod), BindingFlags.NonPublic | BindingFlags.Static)));
         NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_0.
             field_Private_HashSet_1_UnityAction_1_T_0.Add(EventHandlerA);
         NetworkManager.field_Internal_Static_NetworkManager_0.field_Internal_VRCEventDelegate_1_Player_1.

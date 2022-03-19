@@ -1,6 +1,5 @@
 ﻿using PMod.Utils;
 using UnityEngine;
-using MelonLoader;
 using Photon.Pun;
 using VRC;
 using VRC.Core;
@@ -17,21 +16,22 @@ internal class PhotonFreeze : ModuleBase
     private Quaternion _originalRot;
     internal int PhotonID;
     internal bool IsFreeze;
-    internal readonly MelonPreferences_Entry<bool> IsOn;
 
-    internal PhotonFreeze()
+    public PhotonFreeze() : base(true)
     {
-        MelonPreferences.CreateCategory("PhotonFreeze", "PM - Photon Freeze");
-        IsOn = MelonPreferences.CreateEntry("PhotonFreeze", "IsOn", false, "Activate Mod? This is a risky function.");
+        useOnApplicationStart = true;
         useOnPlayerJoined = true;
         useOnUpdate = true;
         useOnInstanceChanged = true;
         RegisterSubscriptions();
     }
 
+    protected override void OnApplicationStart() =>
+        Main.ClientMenu.AddSimpleButton("PhotonFreeze", ShowFreezeMenu);
+
     protected override void OnPlayerJoined(Player player) 
-    { 
-        if (player.prop_APIUser_0.id == Utilities.GetLocalAPIUser().id) 
+    {
+        if (player.prop_APIUser_0.id == Utilities.GetLocalAPIUser().id)
             PhotonID = player.gameObject.GetComponent<PhotonView>().viewIdField;
     }
 
@@ -41,7 +41,7 @@ internal class PhotonFreeze : ModuleBase
     protected override void OnUpdate()
     {
         if (!IsOn.Value) return;
-        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L))
+        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.KeypadMinus))
         {
             var temp = Utilities.GetLocalVRCPlayer().gameObject.transform;
             _isMaxD = !_isMaxD;
@@ -62,7 +62,7 @@ internal class PhotonFreeze : ModuleBase
 
     protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => IsFreeze = false;
 
-    internal void ShowFreezeMenu()
+    private void ShowFreezeMenu()
     {
         _freezeMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
         _freezeMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());

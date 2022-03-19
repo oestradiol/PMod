@@ -1,6 +1,5 @@
 ﻿using PMod.Utils;
 using System;
-using MelonLoader;
 using UnityEngine;
 using VRC.SDKBase;
 using UIExpansionKit.API;
@@ -10,33 +9,30 @@ namespace PMod.Modules;
 internal class Triggers : ModuleBase
 {
     private bool _isForceGlobal;
-    private readonly MelonPreferences_Entry<bool> _isOn;
     internal bool IsAlwaysForceGlobal;
 
-    internal Triggers()
+    public Triggers() : base(false)
     {
-        MelonPreferences.CreateCategory("LocalToGlobal", "PM - Local To Global");
-        _isOn = MelonPreferences.CreateEntry("LocalToGlobal", "IsOn", false, "Activate Mod? This is a risky function.");
+        useOnApplicationStart = true;
         RegisterSubscriptions();
     }
 
-    internal void ShowTriggersMenu()
+    protected override void OnApplicationStart() =>
+        Main.ClientMenu.AddSimpleButton("Triggers", ShowTriggersMenu);
+        
+    private void ShowTriggersMenu()
     {
         var triggersMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
         triggersMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
         var btnName = "LocalToGlobal - ";
         Action action;
-        switch (_isOn.Value)
+        switch (Utils.Utilities.GetWorldSDKVersion() == Utils.Utilities.WorldSDKVersion.SDK2)
         {
-            case true when Utils.Utilities.GetWorldSDKVersion() == Utils.Utilities.WorldSDKVersion.SDK2:
+            case true:
                 btnName += "On";
                 action = ShowLocalToGlobalMenu;
                 break;
             case false:
-                btnName += "Off";
-                action = () => Utils.Utilities.RiskyFuncAlert("LocalToGlobal");
-                break;
-            default:
                 btnName += "Off";
                 action = () => DelegateMethods.PopupV2(
                     "LocalToGlobal",
@@ -65,7 +61,7 @@ internal class Triggers : ModuleBase
         triggerMenu.AddSimpleButton("Go back", ShowTriggersMenu);
         foreach (var @event in trigger.Triggers) triggerMenu.AddSimpleButton(@event.Name, () => 
         { 
-            Patches.triggerOnceLtg |= _isForceGlobal;
+            Patches.TriggerOnceLtg |= _isForceGlobal;
             trigger.ExecuteTrigger?.Invoke(@event);
         });
         triggerMenu.Show();

@@ -6,7 +6,7 @@ namespace PMod.Modules;
 
 internal class ModsAllower : ModuleBase
 {
-    internal ModsAllower()
+    public ModsAllower() : base(true)
     {
         useOnSceneWasLoaded = true;
         RegisterSubscriptions();

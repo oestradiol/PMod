@@ -111,7 +111,7 @@ internal static class Utilities
 
 internal static class DelegateMethods
 {
-    private static Delegate _popupV2Delegate;
+    private static dynamic _popupV2Delegate;
     internal static void PopupV2(string title, string body, string submitButtonText, Il2CppSystem.Action submitButtonAction) =>
         (_popupV2Delegate ??= typeof(VRCUiPopupManager)
             .GetMethods().First(methodBase => 
@@ -119,15 +119,15 @@ internal static class DelegateMethods
                 !methodBase.Name.Contains("PDM") &&
                 Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/StandardPopupV2") &&
                 Utilities.WasUsedBy(methodBase, "OpenSaveSearchPopup"))
-            .GetDelegateForMethodInfo()).DynamicInvoke(VRCUiPopupManager.prop_VRCUiPopupManager_0, title, body, submitButtonText, submitButtonAction, null);
+            .GetDelegateForMethodInfo()).Invoke(VRCUiPopupManager.prop_VRCUiPopupManager_0, title, body, submitButtonText, submitButtonAction, null);
 
-    private static Delegate _inputPopupDelegate;
+    private static dynamic _inputPopupDelegate;
     internal static void InputPopup(string title, string submitButtonText, Il2CppSystem.Action<string, List<KeyCode>, Text> submitButtonAction, string placeholderText = "Enter text....",
         bool useNumericKeypad = false, Il2CppSystem.Action cancelButtonAction = null, string body = null, InputField.InputType inputType = InputField.InputType.Standard) => // Extra shit
         (_inputPopupDelegate ??= typeof(VRCUiPopupManager).GetMethods().First(methodBase =>
             methodBase.Name.StartsWith("Method_Public_Void_String_String_InputType_Boolean_String_Action_3_String_List_1_KeyCode_Text_Action_String_Boolean_Action_1_VRCUiPopup_Boolean_Int32_") &&
             !methodBase.Name.Contains("PDM") && Utilities.ContainsStr(methodBase, "UserInterface/MenuContent/Popups/InputPopup")).GetDelegateForMethodInfo())
-        .DynamicInvoke(VRCUiPopupManager.prop_VRCUiPopupManager_0, title, body, inputType, useNumericKeypad, submitButtonText, submitButtonAction, cancelButtonAction, placeholderText, true, null, false, 0);
+        .Invoke(VRCUiPopupManager.prop_VRCUiPopupManager_0, title, body, inputType, useNumericKeypad, submitButtonText, submitButtonAction, cancelButtonAction, placeholderText, true, null, false, 0);
 
     private static Func<int, Player> _playerFromPhotonIDMethod;
     internal static Player GetPlayerFromPhotonID(int id) =>
@@ -139,6 +139,9 @@ internal static class DelegateMethods
 
 internal class OrbitItem
 {
+    private static Modules.Orbit _orbit;
+    private static Modules.Orbit Orbit => _orbit ??= ModulesManager.GetModule<Modules.Orbit>();
+    
     private readonly Vector3 _initialPos;
     private readonly Quaternion _initialRot;
     private readonly double _index;
@@ -166,29 +169,29 @@ internal class OrbitItem
 
     private Vector3 CircularRot()
     {
-        var angle = ModulesManager.orbit.Timer * ModulesManager.orbit.speed.Value + 2 * Math.PI * _index;
-        return ModulesManager.orbit.OrbitCenter + ModulesManager.orbit.rotationy * (ModulesManager.orbit.rotation * new Vector3((float)Math.Cos(angle) * ModulesManager.orbit.radius.Value, 0,
-            (float)Math.Sin(angle) * ModulesManager.orbit.radius.Value));
+        var angle = Orbit.Timer * Orbit.speed.Value + 2 * Math.PI * _index;
+        return Orbit.OrbitCenter + Orbit.rotationy * (Orbit.rotation * new Vector3((float)Math.Cos(angle) * Orbit.radius.Value, 0,
+            (float)Math.Sin(angle) * Orbit.radius.Value));
     }
 
     private Vector3 CylindricalRot()
     {
-        var angle = ModulesManager.orbit.Timer * ModulesManager.orbit.speed.Value + 2 * Math.PI * _index;
-        return ModulesManager.orbit.OrbitCenter + new Vector3(0, (float)(ModulesManager.orbit.PlayerHeight * _index), 0) + ModulesManager.orbit.rotationy *
-            (ModulesManager.orbit.rotation * new Vector3((float)Math.Cos(angle) * ModulesManager.orbit.radius.Value, 0, (float)Math.Sin(angle) * ModulesManager.orbit.radius.Value));
+        var angle = Orbit.Timer * Orbit.speed.Value + 2 * Math.PI * _index;
+        return Orbit.OrbitCenter + new Vector3(0, (float)(Orbit.PlayerHeight * _index), 0) + Orbit.rotationy *
+            (Orbit.rotation * new Vector3((float)Math.Cos(angle) * Orbit.radius.Value, 0, (float)Math.Sin(angle) * Orbit.radius.Value));
     }
 
     private Vector3 SphericalRot()
     {
-        var angle = (ModulesManager.orbit.Timer * ModulesManager.orbit.speed.Value) / (4 * Math.PI) + _index * 360;
-        var height = ModulesManager.orbit.PlayerHeight * ((ModulesManager.orbit.Timer * ModulesManager.orbit.speed.Value / 2 + _index) % 1);
+        var angle = (Orbit.Timer * Orbit.speed.Value) / (4 * Math.PI) + _index * 360;
+        var height = Orbit.PlayerHeight * ((Orbit.Timer * Orbit.speed.Value / 2 + _index) % 1);
         var rotation = Quaternion.Euler(0, (float)angle, 0);
-        return ModulesManager.orbit.OrbitCenter + ModulesManager.orbit.rotationy * (ModulesManager.orbit.rotation *
-            (rotation * new Vector3((float)(4 * Math.Sqrt(height * ModulesManager.orbit.PlayerHeight - Math.Pow(height, 2)) * ModulesManager.orbit.radius.Value), (float)height, 0)));
+        return Orbit.OrbitCenter + Orbit.rotationy * (Orbit.rotation *
+        (rotation * new Vector3((float)(4 * Math.Sqrt(height * Orbit.PlayerHeight - Math.Pow(height, 2)) * Orbit.radius.Value), (float)height, 0)));
     }
 
     internal Vector3 CurrentPos() => IsOn
-        ? ModulesManager.orbit.rotType switch
+        ? Orbit.rotType switch
         {
             Modules.Orbit.RotType.CircularRot => CircularRot(),
             Modules.Orbit.RotType.CylindricalRot => CylindricalRot(),
@@ -197,7 +200,7 @@ internal class OrbitItem
 
     internal Quaternion CurrentRot()
     {
-        var angle = (float)(ModulesManager.orbit.Timer * 50f * ModulesManager.orbit.speed.Value + 2 * Math.PI * _index);
+        var angle = (float)(Orbit.Timer * 50f * Orbit.speed.Value + 2 * Math.PI * _index);
         return IsOn ? Quaternion.Euler(-angle, 0, -angle) : _initialRot;
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -14,13 +15,11 @@ public static class DelegateExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Type MakeNewCustomDelegate(this Type[] types) => InternalMakeNewCustomDelegate(types);
 
-    private static readonly System.Collections.Hashtable CachedDelegates = new();
+    private static readonly Dictionary<int, Delegate> CachedDelegates = new();
     public static Delegate GetDelegateForMethodInfo(this MethodInfo methodInfo)
     {
         // Cache checking
-        var isCached = CachedDelegates.Contains(methodInfo.MetadataToken);
-        if (isCached)
-            return (Delegate)CachedDelegates[methodInfo.MetadataToken];
+        if (CachedDelegates.TryGetValue(methodInfo.MetadataToken, out var isCached)) return isCached;
             
         var args = methodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
         var paramTypes = methodInfo.IsStatic ? args : QueuePush(methodInfo.DeclaringType, args); // decType shouldn't be null if Non-Static

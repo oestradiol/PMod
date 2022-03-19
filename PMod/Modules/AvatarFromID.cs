@@ -10,7 +10,7 @@ namespace PMod.Modules;
 
 internal class AvatarFromID : ModuleBase
 {
-    internal AvatarFromID()
+    public AvatarFromID() : base(true)
     {
         useOnUiManagerInit = true;
         RegisterSubscriptions();

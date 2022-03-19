@@ -9,22 +9,26 @@ namespace PMod.Modules;
 internal class SoftClone : ModuleBase // Thanks to Yui! <3
 {
     internal Il2CppSystem.Object CurrAvatarDict;
-    private readonly MethodInfo _reloadAvMethod;
+    private MethodInfo _reloadAvMethod;
     internal bool IsSoftClone;
 
-    internal SoftClone()
+    public SoftClone() : base(false)
+    {
+        useOnUiManagerInit = true;
+        useOnApplicationStart = true;
+        RegisterSubscriptions();
+    }
+
+    protected override void OnApplicationStart()
     {
         MethodBase currentInstance;
         _reloadAvMethod = typeof(VRCPlayer)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .First(mi => mi.Name.StartsWith("Method_Private_Void_Boolean_") &&
-                         mi.GetParameters().Any(pi => pi.IsOptional) &&
-                         XrefScanner.UsedBy(mi)
-                             .Any(instance => instance.Type == XrefType.Method &&
-                                              (currentInstance = instance.TryResolve()) != null &&
-                                              currentInstance.Name == "ReloadAvatarNetworkedRPC"));
-        useOnUiManagerInit = true;
-        RegisterSubscriptions();
+                 mi.GetParameters().Any(pi => pi.IsOptional) &&
+                 XrefScanner.UsedBy(mi).Any(instance => instance.Type == XrefType.Method &&
+                      (currentInstance = instance.TryResolve()) != null &&
+                      currentInstance.Name == "ReloadAvatarNetworkedRPC"));
     }
 
     protected override void OnUiManagerInit() =>
