@@ -1,6 +1,7 @@
 ﻿using PMod.Modules;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using MelonLoader;
 using VRC;
 using VRC.Core;
@@ -9,9 +10,9 @@ namespace PMod;
 
 internal static class ModulesManager
 {
-	private static readonly Hashtable Modules = new();
-	private static void InitializeModule<T>() where T : ModuleBase, new() => Modules.Add(typeof(T).Name, new T());
-	internal static T GetModule<T>() => (T)Modules[typeof(T).Name];
+	private static readonly Dictionary<Type, object> Modules = new();
+	private static void InitializeModule<T>() where T : ModuleBase, new() => Modules.Add(typeof(T), new T());
+	internal static T GetModule<T>() where T : ModuleBase => (T)Modules[typeof(T)];
 
 	internal static Action OnPreferencesSaved;
 	internal static Action<int, string> OnSceneWasLoaded;
