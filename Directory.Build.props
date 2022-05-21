@@ -28,6 +28,10 @@
 				<HintPath>$(MelonManaged)\..\MelonLoader.dll</HintPath>
 				<Private>False</Private>
 			</Reference>
+			<Reference Include="0Harmony">
+				<HintPath>$(MelonManaged)\..\0Harmony.dll</HintPath>
+				<Private>False</Private>
+			</Reference>
 			<Reference Include="Newtonsoft.Json">
 				<HintPath>$(MelonManaged)\Newtonsoft.Json.dll</HintPath>
 				<Private>False</Private>

@@ -73,3 +73,22 @@
 //         }
 //     }
 // }
+
+// case 202: // InvisibleJoin // Update: Deactivating because fuck this
+// try
+// {
+//     if (!triggerInvisible) break;
+//
+//     var reOptions = eOptions.TryGetIl2CppPtrToObj<RaiseEventOptions>();
+//     reOptions.field_Public_ReceiverGroup_0 = (ReceiverGroup)3;
+//     @return = _raiseEventDelegate.Invoke(instancePtr, eType, objPtr, eOptions, sOptions, nativeMethodInfoPtr);
+//     reOptions.field_Public_ReceiverGroup_0 = ReceiverGroup.Others;
+//
+//     if (ModulesManager.invisibleJoin.onceOnly) triggerInvisible = false;
+// }
+// catch (Exception e)
+// {
+//     PLogger.Warning("Something went wrong in RaiseEvent202 Detour (InvisibleJoinSetup)");
+//     PLogger.Error($"{e}");
+// }
+// break;

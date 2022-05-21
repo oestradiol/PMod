@@ -9,7 +9,8 @@ namespace PMod.Modules;
 internal class Triggers : ModuleBase
 {
     private bool _isForceGlobal;
-    internal bool IsAlwaysForceGlobal;
+    private bool _isAlwaysForceGlobal;
+    private bool _triggerOnceLtg;
 
     public Triggers() : base(false)
     {
@@ -50,8 +51,8 @@ internal class Triggers : ModuleBase
     {
         var localToGlobalMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
         localToGlobalMenu.AddSimpleButton("Go back", ShowTriggersMenu);
-        localToGlobalMenu.AddToggleButton("Always Force Local to Global", (_) => IsAlwaysForceGlobal = !IsAlwaysForceGlobal, () => IsAlwaysForceGlobal);
-        localToGlobalMenu.AddToggleButton("Force Local to Global on Trigger", (_) => _isForceGlobal = !_isForceGlobal, () => _isForceGlobal);
+        localToGlobalMenu.AddToggleButton("Always Force Local to Global", _ => _isAlwaysForceGlobal = !_isAlwaysForceGlobal, () => _isAlwaysForceGlobal);
+        localToGlobalMenu.AddToggleButton("Force Local to Global on Trigger", _ => _isForceGlobal = !_isForceGlobal, () => _isForceGlobal);
         localToGlobalMenu.Show();
     }
 
@@ -61,9 +62,26 @@ internal class Triggers : ModuleBase
         triggerMenu.AddSimpleButton("Go back", ShowTriggersMenu);
         foreach (var @event in trigger.Triggers) triggerMenu.AddSimpleButton(@event.Name, () => 
         { 
-            Patches.TriggerOnceLtg |= _isForceGlobal;
+            _triggerOnceLtg |= _isForceGlobal;
             trigger.ExecuteTrigger?.Invoke(@event);
         });
         triggerMenu.Show();
+    }
+    
+    public void OnTriggerEvent(VRC_EventHandler.VrcBroadcastType broadcast)
+    {
+        try
+        {
+            if (!IsOn.Value || (!_isAlwaysForceGlobal && !_triggerOnceLtg) || broadcast != VRC_EventHandler.VrcBroadcastType.Local) 
+                return;
+            
+            broadcast = VRC_EventHandler.VrcBroadcastType.AlwaysUnbuffered;
+            _triggerOnceLtg = false;
+        }
+        catch (Exception e)
+        {
+            Main.Logger.Warning("Something went wrong in LocalToGlobalSetup Detour");
+            Main.Logger.Error(e);
+        }
     }
 }

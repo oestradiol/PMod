@@ -16,9 +16,9 @@ internal class TeleportToCursor : ModuleBase
     protected override void OnUpdate()
     {
         if (Input.GetKeyDown(KeyCode.Mouse4) &&
-            Utilities.GetLocalVRCPlayer() != null &&
+            Utilities.GetLocalVrcPlayer() != null &&
             Physics.Raycast(CameraComponent.ScreenPointToRay(Input.mousePosition), out var hitInfo))
-            Utilities.GetLocalVRCPlayer().transform.position = hitInfo.point;
+            Utilities.GetLocalVrcPlayer().transform.position = hitInfo.point;
     }
 
     // Gets the center of the eye (camera)

@@ -17,18 +17,18 @@ public static class Remotes
         {
             PModLoader.Logger.Msg(ConsoleColor.Blue, $"Loader's current version: {LInfo.Version}. Checking for updates...");
             
-            var current = new Hashtable { {"name", LInfo.Name}, {"version", LInfo.Version} };
-            var response = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+            var data = new Dictionary<string, string>() { {"name", LInfo.Name}, {"version", LInfo.Version} };
+            data = JsonConvert.DeserializeObject<Dictionary<string, string>>(
                 await new WebClient { Headers = { [HttpRequestHeader.ContentType] = "application/json" } }
-                    .UploadStringTaskAsync(new Uri(LInfo.MainLink + "api"), JsonConvert.SerializeObject(current)))!;
+                    .UploadStringTaskAsync(new Uri(LInfo.MainLink + "api"), JsonConvert.SerializeObject(data)))!;
 
-            switch (response["result"])
+            switch (data["result"])
             {
                 case "UPDATED":
                     PModLoader.Logger.Msg(ConsoleColor.Green, "The Loader is up to date!");
                     break;
                 case "OUTDATED":
-                    PModLoader.Logger.Msg(ConsoleColor.Yellow, $"The Loader is outdated! Latest version: {response["latest"]}. Downloading...");
+                    PModLoader.Logger.Msg(ConsoleColor.Yellow, $"The Loader is outdated! Latest version: {data["latest"]}. Downloading...");
                     File.WriteAllBytes(Path.Combine(Environment.CurrentDirectory, $"Mods/{LInfo.Name}.dll"), new WebClient().DownloadData(LInfo.MainLink + $"{LInfo.Name}.dll"));
                     PModLoader.Logger.Msg(ConsoleColor.Green, $"Successfully updated {LInfo.Name}!");
                     Restart();
@@ -37,7 +37,7 @@ public static class Remotes
                     PModLoader.Logger.Msg(ConsoleColor.DarkRed, "Welcome, Savitar. What would you want to do today?");
                     break;
                 default:
-                    throw new Exception($"Unrecognizable response detected! Response: {{\"result\":{response["result"]}, \"latest\":{response["latest"]}}}. If you got here, PLEASE report this...");
+                    throw new Exception($"Unrecognizable response detected! Response: {{\"result\":{data["result"]}, \"latest\":{data["latest"]}}}. If you got here, PLEASE report this...");
             }
         }
         catch (Exception e) { PModLoader.Logger.Warning($"Failed to check and download latest version!\n{e}"); }

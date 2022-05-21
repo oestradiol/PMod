@@ -18,7 +18,7 @@ public static class BuildInfo
 {
     public const string Name = "PMod";
     public const string Author = "Davi";
-    public const string Version = "1.4.2";
+    public const string Version = "1.4.3";
 }
 #endregion
 

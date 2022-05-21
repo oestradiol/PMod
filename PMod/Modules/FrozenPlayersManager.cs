@@ -1,8 +1,10 @@
-﻿using System.Linq;
+﻿using PMod.Utils;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MelonLoader;
 using UnityEngine;
+using ExitGames.Client.Photon;
 using TMPro;
 using VRC;
 using Object = UnityEngine.Object;
@@ -11,7 +13,7 @@ namespace PMod.Modules;
 
 internal class FrozenPlayersManager : ModuleBase
 {
-    internal readonly Dictionary<string, Timer> EntryDict = new();
+    private readonly Dictionary<string, Timer> _entryDict = new();
 
     public FrozenPlayersManager() : base(true)
     {
@@ -23,27 +25,45 @@ internal class FrozenPlayersManager : ModuleBase
     protected override void OnPlayerJoined(Player player)
     {
         var id = player.prop_APIUser_0.id;
-        if (id == Utils.Utilities.GetLocalAPIUser().id) return;
+        
+        if (id == Utilities.GetLocalAPIUser().id) return;
+        
         Timer timer = new();
-        EntryDict.Add(id, timer);
+        _entryDict.Add(id, timer);
+        
         var text = player.transform.Find("Player Nameplate/Canvas/Nameplate/Contents/Main/Text Container/Sub Text").gameObject;
-        timer.text = Object.Instantiate(text, text.transform.parent);
-        Object.DestroyImmediate(timer.text.transform.Find("Icon").gameObject);
-        var tm = timer.text.GetComponentInChildren<TextMeshProUGUI>();
+        timer.Text = Object.Instantiate(text, text.transform.parent);
+        Object.DestroyImmediate(timer.Text.transform.Find("Icon").gameObject);
+        var tm = timer.Text.GetComponentInChildren<TextMeshProUGUI>();
         tm.text = "Frozen";
         tm.color = Color.cyan;
-        if (MelonHandler.Mods.Any(m => m.Info.Name.Contains("Mint")))
-            timer.text.transform.gameObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, 30);
-        timer.text.SetActive(false);
+        timer.Text.SetActive(false);
     }
 
-    protected override void OnPlayerLeft(Player player) => EntryDict.Remove(player.prop_APIUser_0.id);
-    
-    internal class Timer
+    protected override void OnPlayerLeft(Player player) => _entryDict.Remove(player.prop_APIUser_0.id);
+
+    public void OnEvent7(EventData eventData)
+    {
+        try
+        {
+            if (!IsOn.Value) return;
+            
+            var key = Utilities.GetPlayerFromPhotonID(eventData.Sender)?.field_Private_APIUser_0?.id;
+            if (key != null && _entryDict.TryGetValue(key, out var entry))
+                entry.RestartTimer();
+        }
+        catch (Exception e)
+        {
+            Main.Logger.Warning("Something went wrong in OnEvent7 Detour (FrozenPlayersManager)");
+            Main.Logger.Error(e);
+        }
+    }
+
+    private class Timer
     {
         private bool _isFrozen;
         private Stopwatch _timer;
-        internal GameObject text;
+        internal GameObject Text;
 
         internal Timer()
         {
@@ -51,7 +71,7 @@ internal class FrozenPlayersManager : ModuleBase
             RestartTimer();
         }
 
-        private void NametagSet() { if (text != null) text.SetActive(_isFrozen); }
+        private void NametagSet() { if (Text != null) Text.SetActive(_isFrozen); }
 
         internal void RestartTimer()
         {

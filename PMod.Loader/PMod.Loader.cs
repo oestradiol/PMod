@@ -1,6 +1,5 @@
 ﻿#region Imports, Info & Namespace
 using System;
-using System.Collections;
 using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
@@ -30,7 +29,7 @@ public static class LInfo
     // Loader info
     public const string Name = "PMod.Loader";
     public const string Author = "Davi";
-    public const string Version = "1.0.9";
+    public const string Version = "1.1.1";
 
     // PMod info
     internal const string ModName = "PMod";
@@ -50,7 +49,7 @@ public class PModLoader : MelonMod
         Task.Run(Remotes.UpdateLoader);
         if (!InitializeAssembly(Remotes.GetPModAssembly())) return;
 
-        dynamic onAppStartPMod = Events[nameof(OnApplicationStart)];
+        var onAppStartPMod = Events[nameof(OnApplicationStart)];
         Events[nameof(OnApplicationStart)] = (Action)(() =>
         {
             CustomEvents.OnApplicationStart();
@@ -86,7 +85,7 @@ public class PModLoader : MelonMod
         }
         
         foreach (var m in methods)
-            Events.Add(m.Name, m.GetDelegateForMethodInfo());
+            Events.Add(m.Name, m.CreateDelegate());
 
         return true;
     }

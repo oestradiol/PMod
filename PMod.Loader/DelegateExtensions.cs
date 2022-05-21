@@ -16,7 +16,7 @@ public static class DelegateExtensions
     public static Type MakeNewCustomDelegate(this Type[] types) => InternalMakeNewCustomDelegate(types);
 
     private static readonly Dictionary<int, Delegate> CachedDelegates = new();
-    public static Delegate GetDelegateForMethodInfo(this MethodInfo methodInfo)
+    public static Delegate CreateDelegate(this MethodInfo methodInfo)
     {
         // Cache checking
         if (CachedDelegates.TryGetValue(methodInfo.MetadataToken, out var isCached)) return isCached;
@@ -45,4 +45,7 @@ public static class DelegateExtensions
         argsTypes[0] = dec;
         return argsTypes;
     }
+
+    public static TDelegate CreateDelegate<TDelegate>(this MethodInfo methodInfo) where TDelegate : Delegate =>
+        (TDelegate)methodInfo.CreateDelegate(typeof(TDelegate));
 }

@@ -144,9 +144,9 @@ internal class Orbit : ModuleBase
         item.GetComponent<Rigidbody>().isKinematic = true;
         item.GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 0);
         item.gameObject.SetActive(true);
-        if (Networking.GetOwner(item.gameObject).playerId == Utilities.GetLocalVRCPlayerApi().playerId) return;
+        if (Networking.GetOwner(item.gameObject).playerId == Utilities.GetLocalVrcPlayerApi().playerId) return;
         item.currentlyHeldBy = null; 
-        Networking.SetOwner(Utilities.GetLocalVRCPlayerApi(), item.gameObject);
+        Networking.SetOwner(Utilities.GetLocalVrcPlayerApi(), item.gameObject);
     }
 
     private static void Unpatch(VRC_Pickup key, OrbitItem value)

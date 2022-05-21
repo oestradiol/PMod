@@ -120,7 +120,7 @@ internal class ItemGrabber : ModuleBase
     {
         if (item == null) foreach (var pickup in _pickups)
         {
-            var dist = Vector3.Distance(Utilities.GetLocalVRCPlayer().transform.position, pickup.transform.position);
+            var dist = Vector3.Distance(Utilities.GetLocalVrcPlayer().transform.position, pickup.transform.position);
             if (Math.Abs(_minDistance.Value + 1) < 0.01 || dist <= _minDistance.Value) PickupItem(pickup);
         }
         else PickupItem(item);
@@ -131,10 +131,10 @@ internal class ItemGrabber : ModuleBase
         try
         {
             Patch(item);
-            if (_takeOwnership.Value && Networking.GetOwner(item.gameObject).playerId != Utilities.GetLocalVRCPlayerApi().playerId)
+            if (_takeOwnership.Value && Networking.GetOwner(item.gameObject).playerId != Utilities.GetLocalVrcPlayerApi().playerId)
             {
                 item.GetComponent<VRC_Pickup>().currentlyHeldBy = null;
-                Networking.SetOwner(Utilities.GetLocalVRCPlayerApi(), item.gameObject);
+                Networking.SetOwner(Utilities.GetLocalVrcPlayerApi(), item.gameObject);
             }
             item.transform.position = Utilities.GetBoneTransform(Player.prop_Player_0, HumanBodyBones.Hips).position;
         }

@@ -1,6 +1,9 @@
 ﻿using PMod.Utils;
+using System;
 using UnityEngine;
+using UnhollowerBaseLib;
 using Photon.Pun;
+using ExitGames.Client.Photon;
 using VRC;
 using VRC.Core;
 using UIExpansionKit.API;
@@ -14,8 +17,8 @@ internal class PhotonFreeze : ModuleBase
     private Transform _cloneObj;
     private Vector3 _originalPos;
     private Quaternion _originalRot;
-    internal int PhotonID;
-    internal bool IsFreeze;
+    private int _photonID;
+    private bool _isFreeze;
 
     public PhotonFreeze() : base(true)
     {
@@ -32,7 +35,7 @@ internal class PhotonFreeze : ModuleBase
     protected override void OnPlayerJoined(Player player) 
     {
         if (player.prop_APIUser_0.id == Utilities.GetLocalAPIUser().id)
-            PhotonID = player.gameObject.GetComponent<PhotonView>().viewIdField;
+            _photonID = player.gameObject.GetComponent<PhotonView>().viewIdField;
     }
 
     private Vector3 _previousPos;
@@ -43,7 +46,7 @@ internal class PhotonFreeze : ModuleBase
         if (!IsOn.Value) return;
         if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.KeypadMinus))
         {
-            var temp = Utilities.GetLocalVRCPlayer().gameObject.transform;
+            var temp = Utilities.GetLocalVrcPlayer().gameObject.transform;
             _isMaxD = !_isMaxD;
             if (_isMaxD)
             {
@@ -60,32 +63,32 @@ internal class PhotonFreeze : ModuleBase
         }
     }
 
-    protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => IsFreeze = false;
+    protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => _isFreeze = false;
 
     private void ShowFreezeMenu()
     {
         _freezeMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
         _freezeMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
-        _freezeMenu.AddToggleButton("PhotonFreeze", (_) => ToggleFreeze(), () => IsFreeze);
-        if (IsFreeze) _freezeMenu.AddSimpleButton("TP To Frozen Position", () => { TpPlayerToPos(_originalPos, _originalRot); });
+        _freezeMenu.AddToggleButton("PhotonFreeze", _ => ToggleFreeze(), () => _isFreeze);
+        if (_isFreeze) _freezeMenu.AddSimpleButton("TP To Frozen Position", () => { TpPlayerToPos(_originalPos, _originalRot); });
         _freezeMenu.Show();
     }
 
     private static void TpPlayerToPos(Vector3 originalPos, Quaternion originalRot)
     {
-        Utilities.GetLocalVRCPlayer().transform.position = originalPos;
-        Utilities.GetLocalVRCPlayer().transform.rotation = originalRot;
+        Utilities.GetLocalVrcPlayer().transform.position = originalPos;
+        Utilities.GetLocalVrcPlayer().transform.rotation = originalRot;
     }
 
     private void ToggleFreeze()
     {
-        IsFreeze = !IsFreeze;
-        if (IsFreeze)
+        _isFreeze = !_isFreeze;
+        if (_isFreeze)
         {
-            _originalPos = Utilities.GetLocalVRCPlayerApi().GetPosition();
-            _originalRot = Utilities.GetLocalVRCPlayer().transform.rotation;
+            _originalPos = Utilities.GetLocalVrcPlayerApi().GetPosition();
+            _originalRot = Utilities.GetLocalVrcPlayer().transform.rotation;
         }
-        Clone(IsFreeze);
+        Clone(_isFreeze);
         ShowFreezeMenu();
     }
 
@@ -93,10 +96,10 @@ internal class PhotonFreeze : ModuleBase
     {
         if (toggle)
         {
-            _cloneObj = Object.Instantiate(Utilities.GetLocalVRCPlayer().prop_VRCAvatarManager_0.transform.Find("Avatar"), null, true);
+            _cloneObj = Object.Instantiate(Utilities.GetLocalVrcPlayer().prop_VRCAvatarManager_0.transform.Find("Avatar"), null, true);
             _cloneObj.name = "Cloned Frozen Avatar";
-            _cloneObj.position = Utilities.GetLocalVRCPlayer().transform.position;
-            _cloneObj.rotation = Utilities.GetLocalVRCPlayer().transform.rotation;
+            _cloneObj.position = Utilities.GetLocalVrcPlayer().transform.position;
+            _cloneObj.rotation = Utilities.GetLocalVrcPlayer().transform.rotation;
 
             var animator = _cloneObj.GetComponent<Animator>();
             if (animator != null && animator.isHuman)
@@ -109,5 +112,27 @@ internal class PhotonFreeze : ModuleBase
             Tools.SetLayerRecursively(_cloneObj.gameObject, LayerMask.NameToLayer("Player"));
         }
         else Object.Destroy(_cloneObj.gameObject);
+    }
+
+    private Il2CppSystem.Object _lastSentEv7;
+    public bool? RaiseEvent7(IntPtr instancePtr, byte eType, IntPtr objPtr, IntPtr eOptions, SendOptions sOptions, IntPtr nativeMethodInfoPtr)
+    {
+        try
+        {
+            if (IsOn.Value && Il2CppArrayBase<int>.WrapNativeGenericArrayPointer(objPtr)[0] == _photonID)
+            {
+                if (!_isFreeze)
+                    _lastSentEv7 = new Il2CppSystem.Object(objPtr);
+                else
+                    return Patches.RaiseEventDelegate.Invoke(instancePtr, eType, _lastSentEv7.Pointer, eOptions, sOptions, nativeMethodInfoPtr);
+            }
+        }
+        catch (Exception e)
+        {
+            Main.Logger.Warning("Something went wrong in RaiseEvent7 Detour (PhotonFreeze)");
+            Main.Logger.Error(e);
+        }
+
+        return null;
     }
 }
