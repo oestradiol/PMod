@@ -34,7 +34,7 @@ internal class SoftClone : ModuleBase // Thanks to Yui! <3
     }
 
     protected override void OnUiManagerInit() =>
-        Utilities.CreateButton(Utilities.Menu.InteractMenu, "Soft Clone Avatar", "Locally clones the selected user's Avatar.", _SoftClone);
+        UiUtils.CreateButton(UiUtils.Menu.InteractMenu, "Soft Clone Avatar", "Locally clones the selected user's Avatar.", _SoftClone);
 
     private void _SoftClone()
     {

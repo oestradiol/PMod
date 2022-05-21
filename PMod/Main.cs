@@ -22,9 +22,7 @@ public static class BuildInfo
 }
 #endregion
 
-// TODO: Add DoubleTapRunner
 // TODO: Run benchmark on each event // Was done, might have a memory leakage problem.
-// TODO: Refactor Utilites Class (For once!!)
 // TODO: ItemGrabber Patch for Udon components. 
 // TODO: OrbitItem to MonoBehaviour
 

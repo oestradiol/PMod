@@ -30,11 +30,11 @@ internal class CopyAsset : ModuleBase
     }
 
     protected override void OnUiManagerInit() =>
-        Utilities.CreateButton(Utilities.Menu.InteractMenu, "Copy Asset", "Copies the asset file to the destined folder.", _CopyAsset);
+        UiUtils.CreateButton(UiUtils.Menu.InteractMenu, "Copy Asset", "Copies the asset file to the destined folder.", _CopyAsset);
 
     private void _CopyAsset()
     {
-        var avatar = Utilities.GetPlayerFromID(Utilities.SelectedUserMenuQm.GetComponent<VRC.UI.Elements.Menus.SelectedUserMenuQM>().field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
+        var avatar = Utilities.GetPlayerFromID(UiUtils.SelectedUserMenuQm.GetComponent<VRC.UI.Elements.Menus.SelectedUserMenuQM>().field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
         if (!Directory.Exists(_toPath.Value)) Directory.CreateDirectory(_toPath.Value);
         try
         {

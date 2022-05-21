@@ -1,15 +1,14 @@
-﻿using PMod.Utils;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using MelonLoader;
+using UIExpansionKit.API;
 using UnityEngine;
 using VRC;
 using VRC.Core;
 using VRC.SDKBase;
-using UIExpansionKit.API;
 using Object = UnityEngine.Object;
 using Utilities = PMod.Utils.Utilities;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Orbit;
 
 internal class Orbit : ModuleBase
 {
