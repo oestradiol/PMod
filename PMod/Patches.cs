@@ -54,7 +54,7 @@ internal class Patches
 
     private static void TriggerEventSetup(IntPtr instancePtr, IntPtr eventPtr, VRC_EventHandler.VrcBroadcastType broadcast, int instigatorId, float fastForward, IntPtr nativeMethodInfoPtr)
     {
-        ModulesManager.GetModule<Triggers>().OnTriggerEvent(broadcast);
+        broadcast = ModulesManager.GetModule<Triggers>().OnTriggerEvent(broadcast);
         _triggerEventDelegate.Invoke(instancePtr, eventPtr, broadcast, instigatorId, fastForward, nativeMethodInfoPtr);
     }
 }

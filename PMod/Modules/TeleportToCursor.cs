@@ -15,17 +15,16 @@ internal class TeleportToCursor : ModuleBase
     // Check for button trigger and teleports
     protected override void OnUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse4) &&
-            Utilities.GetLocalVrcPlayer() != null &&
+        var player = Utilities.GetLocalVrcPlayer();
+        if (player != null && Input.GetKeyDown(KeyCode.Mouse4) &&
             Physics.Raycast(CameraComponent.ScreenPointToRay(Input.mousePosition), out var hitInfo))
-            Utilities.GetLocalVrcPlayer().transform.position = hitInfo.point;
+            player.transform.position = hitInfo.point;
     }
 
     // Gets the center of the eye (camera)
     private static Camera _cameraComponent;
     private static Camera CameraComponent =>
         _cameraComponent ??= Resources.FindObjectsOfTypeAll<NeckMouseRotator>()[0].transform.Find(
-            Environment.CurrentDirectory.Contains("vrchat-vrchat") ? "CenterEyeAnchor" : 
+            Environment.CurrentDirectory.Contains("vrchat-vrchat") ? "CenterEyeAnchor" :
                 (UnityEngine.XR.XRDevice.isPresent ? "" : "Camera (head)/") + "Camera (eye)").GetComponent<Camera>();
-            
 }

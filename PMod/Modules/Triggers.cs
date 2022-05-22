@@ -68,12 +68,12 @@ internal class Triggers : ModuleBase
         triggerMenu.Show();
     }
     
-    public void OnTriggerEvent(VRC_EventHandler.VrcBroadcastType broadcast)
+    public VRC_EventHandler.VrcBroadcastType OnTriggerEvent(VRC_EventHandler.VrcBroadcastType broadcast)
     {
         try
         {
             if (!IsOn.Value || (!_isAlwaysForceGlobal && !_triggerOnceLtg) || broadcast != VRC_EventHandler.VrcBroadcastType.Local) 
-                return;
+                return broadcast;
             
             broadcast = VRC_EventHandler.VrcBroadcastType.AlwaysUnbuffered;
             _triggerOnceLtg = false;
@@ -83,5 +83,7 @@ internal class Triggers : ModuleBase
             Main.Logger.Warning("Something went wrong in LocalToGlobalSetup Detour");
             Main.Logger.Error(e);
         }
+
+        return broadcast;
     }
 }
