@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -12,6 +14,7 @@ namespace PMod.Utils;
 
 internal static class Utilities
 {
+    internal static string ModFolder = Path.Combine(Environment.CurrentDirectory, BuildInfo.Name);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static VRCPlayer GetLocalVrcPlayer() => VRCPlayer.field_Internal_Static_VRCPlayer_0;
 
@@ -63,6 +66,32 @@ internal static class Utilities
                 .Any(instance => instance.TryResolve() != null &&
                                  instance.TryResolve().Name.Equals(methodName, StringComparison.Ordinal));
         } catch { return false; } 
+    }
+    
+    private static readonly Dictionary<string, bool> FolderCache = new();
+
+    internal static bool EnsureFolderExists(string folderPath)
+    {
+        if (FolderCache.TryGetValue(folderPath, out var previousResult))
+            return previousResult;
+
+        bool result;
+        
+        if (Directory.Exists(folderPath))
+            result = true;
+        else
+        {
+            try
+            {
+                Directory.CreateDirectory(folderPath);
+                result = true;
+            }
+            catch
+            { result = false; }
+        }
+        
+        FolderCache.Add(folderPath, result);
+        return result;
     }
 }
 

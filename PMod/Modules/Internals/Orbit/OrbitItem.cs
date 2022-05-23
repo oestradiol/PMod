@@ -2,12 +2,13 @@ using System;
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace PMod.Modules.Orbit;
+namespace PMod.Modules.Internals;
 
+// TODO: OrbitItem to MonoBehaviour
 internal class OrbitItem
 {
     private static Orbit _orbit;
-    private static Orbit Orbit => _orbit ??= ModulesManager.GetModule<Orbit>();
+    private static Orbit Orbit => _orbit ??= Manager.GetModule<Orbit>();
     
     private readonly Vector3 _initialPos;
     private readonly Quaternion _initialRot;

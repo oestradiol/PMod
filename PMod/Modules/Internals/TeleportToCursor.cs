@@ -1,19 +1,13 @@
-﻿using PMod.Utils;
-using System;
+﻿using System;
+using PMod.Utils;
 using UnityEngine;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class TeleportToCursor : ModuleBase
+internal class TeleportToCursor : VrcMod
 {
-    public TeleportToCursor() : base(false)
-    {
-        useOnUpdate = true;
-        RegisterSubscriptions();
-    }
-
     // Check for button trigger and teleports
-    protected override void OnUpdate()
+    public override void OnUpdate()
     {
         var player = Utilities.GetLocalVrcPlayer();
         if (player != null && Input.GetKeyDown(KeyCode.Mouse4) &&

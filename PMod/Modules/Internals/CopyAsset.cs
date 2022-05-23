@@ -1,41 +1,45 @@
 ﻿using PMod.Utils;
 using System;
-using System.IO;
-using System.Text;
-using System.Linq;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using MelonLoader;
 using VRC.Core;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class CopyAsset : ModuleBase
+internal class CopyAsset : VrcMod
 {
     private MelonPreferences_Entry<string> _toPath;
 
-    public CopyAsset() : base(true)
+    public override void OnApplicationStart()
     {
-        useOnApplicationStart = true;
-        useOnUiManagerInit = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnApplicationStart()
-    {
-        MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
-        _toPath = MelonPreferences.CreateEntry(ThisModuleName, "ToPath", 
+        var thisModuleName = GetType().Name;
+        MelonPreferences.CreateCategory(thisModuleName, $"{BuildInfo.Name} - {thisModuleName}");
+        _toPath = MelonPreferences.CreateEntry(thisModuleName, "ToPath", 
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Assets"), "Path to save Assets");
     }
 
-    protected override void OnUiManagerInit() =>
+    public override void OnUiManagerInit() =>
         UiUtils.CreateButton(UiUtils.Menu.InteractMenu, "Copy Asset", "Copies the asset file to the destined folder.", _CopyAsset);
 
     private void _CopyAsset()
     {
         var avatar = Utilities.GetPlayerFromID(UiUtils.SelectedUserMenuQm.GetComponent<VRC.UI.Elements.Menus.SelectedUserMenuQM>().field_Private_IUser_0.prop_String_0).prop_ApiAvatar_0;
-        if (!Directory.Exists(_toPath.Value)) Directory.CreateDirectory(_toPath.Value);
+        
+        if (!Utilities.EnsureFolderExists(_toPath.Value))
+        {
+            DelegateMethods.PopupV2(
+                "Copy Asset",
+                $"Failed to copy avatar \"{avatar.name}\". Folder \"{_toPath.Value}\" does not exist, and creation failed.",
+                "Close",
+                new Action(() => { VRCUiManager.prop_VRCUiManager_0.HideScreen("POPUP"); }));
+            return;
+        }
+        
         try
         {
             ToCopyAsset(avatar);
@@ -65,7 +69,7 @@ internal class CopyAsset : ModuleBase
 
     private static string ComputeVersionString(string assetUrl)
     {
-        string result = BitConverter.GetBytes(
+        var result = BitConverter.GetBytes(
                 int.Parse(new Regex("(?:\\/file_[0-9A-Za-z-]+\\/)([0-9]+)", RegexOptions.Compiled).Match(assetUrl).Groups[1].Value))
             .Aggregate("", (current, b) => current + b.ToString("X2"));
         return string.Concat(Enumerable.Repeat("0", (32 - result.Length))) + result;

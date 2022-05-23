@@ -90,6 +90,7 @@ public class PModLoader : MelonMod
         return true;
     }
     
+    // Benchmark was done, might have a memory leakage problem.
     private static readonly Dictionary<string, dynamic> Events = new();
     
     // Melon Events

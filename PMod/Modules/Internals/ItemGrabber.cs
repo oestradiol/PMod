@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using MelonLoader;
+using PMod.Utils;
+using UIExpansionKit.API;
 using UnityEngine;
 using VRC;
 using VRC.SDKBase;
-using UIExpansionKit.API;
 using Object = UnityEngine.Object;
 using Utilities = PMod.Utils.Utilities;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class ItemGrabber : ModuleBase
+// TODO: ItemGrabber Patch for Udon components.
+internal class ItemGrabber : VrcMod
 {
     private readonly Dictionary<IntPtr, object[]> _previousStates = new();
     private ICustomShowableLayoutedMenu _selectionMenu;
@@ -21,28 +23,22 @@ internal class ItemGrabber : ModuleBase
     private ICustomShowableLayoutedMenu _pickupMenu;
     private VRC_Pickup[] _pickups;
 
-    public ItemGrabber() : base(false)
+    public override void OnApplicationStart()
     {
-        useOnApplicationStart = true;
-        useOnSceneWasLoaded = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnApplicationStart()
-    {
-        MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
-        _minDistance = MelonPreferences.CreateEntry(ThisModuleName, "GrabDistance", -1.0f, "Distance (meters) for grabbing all, set to -1 for unlimited.");
-        _patchAll = MelonPreferences.CreateEntry(ThisModuleName, "PatchAllOnLoad", false, "Patch All on Scene Load");
-        _takeOwnership = MelonPreferences.CreateEntry(ThisModuleName, "TakeOwnership", true, "Take Ownership of Object on Grab");
+        var thisModuleName = GetType().Name;
+        MelonPreferences.CreateCategory(thisModuleName, $"{BuildInfo.Name} - {thisModuleName}");
+        _minDistance = MelonPreferences.CreateEntry(thisModuleName, "GrabDistance", -1.0f, "Distance (meters) for grabbing all, set to -1 for unlimited.");
+        _patchAll = MelonPreferences.CreateEntry(thisModuleName, "PatchAllOnLoad", false, "Patch All on Scene Load");
+        _takeOwnership = MelonPreferences.CreateEntry(thisModuleName, "TakeOwnership", true, "Take Ownership of Object on Grab");
         _pickupMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
-        _pickupMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
+        _pickupMenu.AddSimpleButton("Go back", () => UiUtils.ClientMenu.Show());
         _pickupMenu.AddSimpleButton("Patch", () => Select("Patch"));
         _pickupMenu.AddSimpleButton("Unpatch", () => Select("Unpatch"));
         _pickupMenu.AddSimpleButton("Grab", () => Select("Grab"));
-        Main.ClientMenu.AddSimpleButton("ItemGrabber", () => _pickupMenu.Show());
+        UiUtils.ClientMenu.AddSimpleButton("ItemGrabber", () => _pickupMenu.Show());
     }
 
-    protected override void OnSceneWasLoaded(int buildIndex, string sceneName)
+    public override void OnSceneWasLoaded(int buildIndex, string sceneName)
     {
         if (!_patchAll.Value) return;
         _pickups = Object.FindObjectsOfType<VRC_Pickup>();

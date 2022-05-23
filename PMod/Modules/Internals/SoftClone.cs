@@ -1,27 +1,20 @@
-﻿using PMod.Utils;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
-using UnhollowerRuntimeLib.XrefScans;
 using ExitGames.Client.Photon;
+using PMod.Utils;
+using UnhollowerRuntimeLib.XrefScans;
 using VRC.DataModel;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class SoftClone : ModuleBase // Thanks to Yui! <3
+internal class SoftClone : VrcMod // Thanks to Yui! <3
 {
     private Il2CppSystem.Object _currAvatarDict;
     private MethodInfo _reloadAvMethod;
     private bool _isSoftClone;
 
-    public SoftClone() : base(false)
-    {
-        useOnUiManagerInit = true;
-        useOnApplicationStart = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnApplicationStart()
+    public override void OnApplicationStart()
     {
         MethodBase currentInstance;
         _reloadAvMethod = typeof(VRCPlayer)
@@ -33,7 +26,7 @@ internal class SoftClone : ModuleBase // Thanks to Yui! <3
                       currentInstance.Name == "ReloadAvatarNetworkedRPC"));
     }
 
-    protected override void OnUiManagerInit() =>
+    public override void OnUiManagerInit() =>
         UiUtils.CreateButton(UiUtils.Menu.InteractMenu, "Soft Clone Avatar", "Locally clones the selected user's Avatar.", _SoftClone);
 
     private void _SoftClone()

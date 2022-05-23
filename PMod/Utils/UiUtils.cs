@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using UIExpansionKit.API;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,14 @@ namespace PMod.Utils;
 
 internal static class UiUtils
 {
+    internal static ICustomShowableLayoutedMenu ClientMenu;
+    internal static void Init()
+    {
+        ClientMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
+        ClientMenu.AddSimpleButton("Close Menu", ClientMenu.Hide);
+        ExpansionKitApi.GetExpandedMenu(ExpandedMenu.QuickMenu).AddSimpleButton(BuildInfo.Name, () => ClientMenu.Show());
+    }
+    
     internal static void RiskyFuncAlert(string funcName) => DelegateMethods.PopupV2(
         funcName,
         "You have to first activate the mod on Melon Preferences menu! Be aware that this is a risky function.",

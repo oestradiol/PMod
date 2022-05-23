@@ -7,7 +7,7 @@
 // using UnityEngine.UI;
 // using Object = UnityEngine.Object;
 //
-// namespace PMod.Modules
+// namespace PMod.Modules.Internals
 // {
 //     internal class InvisibleJoin : ModuleBase
 //     {

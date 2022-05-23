@@ -1,30 +1,24 @@
-﻿using PMod.Utils;
-using System;
+﻿using System;
+using PMod.Utils;
+using UIExpansionKit.API;
 using UnityEngine;
 using VRC.SDKBase;
-using UIExpansionKit.API;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class Triggers : ModuleBase
+internal class Triggers : VrcMod
 {
     private bool _isForceGlobal;
     private bool _isAlwaysForceGlobal;
     private bool _triggerOnceLtg;
 
-    public Triggers() : base(false)
-    {
-        useOnApplicationStart = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnApplicationStart() =>
-        Main.ClientMenu.AddSimpleButton("Triggers", ShowTriggersMenu);
+    public override void OnApplicationStart() =>
+        UiUtils.ClientMenu.AddSimpleButton("Triggers", ShowTriggersMenu);
         
     private void ShowTriggersMenu()
     {
         var triggersMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
-        triggersMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
+        triggersMenu.AddSimpleButton("Go back", () => UiUtils.ClientMenu.Show());
         var btnName = "LocalToGlobal - ";
         Action action;
         switch (Utils.Utilities.GetWorldSDKVersion() == Utils.Utilities.WorldSDKVersion.SDK2)

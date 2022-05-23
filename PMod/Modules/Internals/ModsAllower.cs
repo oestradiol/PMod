@@ -2,17 +2,11 @@
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class ModsAllower : ModuleBase
+internal class ModsAllower : VrcMod
 {
-    public ModsAllower() : base(true)
-    {
-        useOnSceneWasLoaded = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnSceneWasLoaded(int buildIndex, string sceneName)
+    public override void OnSceneWasLoaded(int buildIndex, string sceneName)
     {
         var activeScene = SceneManager.GetActiveScene();
         foreach (var rootGameObject in activeScene.GetRootGameObjects())

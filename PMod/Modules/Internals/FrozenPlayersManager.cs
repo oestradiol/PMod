@@ -1,28 +1,21 @@
-﻿using PMod.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using MelonLoader;
-using UnityEngine;
 using ExitGames.Client.Photon;
+using MelonLoader;
+using PMod.Utils;
 using TMPro;
+using UnityEngine;
 using VRC;
 using Object = UnityEngine.Object;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class FrozenPlayersManager : ModuleBase
+internal class FrozenPlayersManager : VrcMod
 {
     private readonly Dictionary<string, Timer> _entryDict = new();
 
-    public FrozenPlayersManager() : base(true)
-    {
-        useOnPlayerJoined = true;
-        useOnPlayerLeft = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnPlayerJoined(Player player)
+    public override void OnPlayerJoined(Player player)
     {
         var id = player.prop_APIUser_0.id;
         
@@ -40,7 +33,7 @@ internal class FrozenPlayersManager : ModuleBase
         timer.Text.SetActive(false);
     }
 
-    protected override void OnPlayerLeft(Player player) => _entryDict.Remove(player.prop_APIUser_0.id);
+    public override void OnPlayerLeft(Player player) => _entryDict.Remove(player.prop_APIUser_0.id);
 
     public void OnEvent7(EventData eventData)
     {

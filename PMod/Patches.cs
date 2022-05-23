@@ -4,6 +4,7 @@ using VRC.SDKBase;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
 using PMod.Modules;
+using PMod.Modules.Internals;
 using PMod.Utils;
 
 namespace PMod;
@@ -13,7 +14,7 @@ internal class Patches
     private static dynamic _onEventDelegate;
     public static dynamic RaiseEventDelegate;
     private static dynamic _triggerEventDelegate;
-    internal static void OnApplicationStart()
+    internal static void Init()
     {
         _onEventDelegate = NativePatchUtils.Patch(typeof(VRCNetworkingClient)
                 .GetMethod(nameof(VRCNetworkingClient.OnEvent)),
@@ -35,10 +36,10 @@ internal class Patches
         switch (eventData.Code)
         {
             case 7:
-                ModulesManager.GetModule<FrozenPlayersManager>().OnEvent7(eventData);
+                Manager.GetModule<FrozenPlayersManager>().OnEvent7(eventData);
                 break;
             case 253:
-                ModulesManager.GetModule<SoftClone>().OnEvent253(eventData);
+                Manager.GetModule<SoftClone>().OnEvent253(eventData);
                 break;
         }
         
@@ -48,13 +49,13 @@ internal class Patches
     private static bool RaiseEventSetup(IntPtr instancePtr, byte eType, IntPtr objPtr, IntPtr eOptions, SendOptions sOptions, IntPtr nativeMethodInfoPtr) =>
         eType switch
         {
-            7 => ModulesManager.GetModule<PhotonFreeze>().RaiseEvent7(instancePtr, eType, objPtr, eOptions, sOptions, nativeMethodInfoPtr),
+            7 => Manager.GetModule<PhotonFreeze>().RaiseEvent7(instancePtr, eType, objPtr, eOptions, sOptions, nativeMethodInfoPtr),
             _ => null
         } ?? RaiseEventDelegate(instancePtr, eType, objPtr, eOptions, sOptions, nativeMethodInfoPtr);
 
     private static void TriggerEventSetup(IntPtr instancePtr, IntPtr eventPtr, VRC_EventHandler.VrcBroadcastType broadcast, int instigatorId, float fastForward, IntPtr nativeMethodInfoPtr)
     {
-        broadcast = ModulesManager.GetModule<Triggers>().OnTriggerEvent(broadcast);
+        broadcast = Manager.GetModule<Triggers>().OnTriggerEvent(broadcast);
         _triggerEventDelegate.Invoke(instancePtr, eventPtr, broadcast, instigatorId, fastForward, nativeMethodInfoPtr);
     }
 }

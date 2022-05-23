@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using MelonLoader;
+using PMod.Utils;
 using UIExpansionKit.API;
 using UnityEngine;
 using VRC;
@@ -8,9 +9,9 @@ using VRC.SDKBase;
 using Object = UnityEngine.Object;
 using Utilities = PMod.Utils.Utilities;
 
-namespace PMod.Modules.Orbit;
+namespace PMod.Modules.Internals;
 
-internal class Orbit : ModuleBase
+internal class Orbit : VrcMod
 {
     private ICustomShowableLayoutedMenu _selectionMenu;
     private VRCPlayer _currentPlayer;
@@ -36,43 +37,33 @@ internal class Orbit : ModuleBase
         SphericalRot,
     }
 
-    public Orbit() : base(false)
+    public override void OnApplicationStart()
     {
-        useOnApplicationStart = true;
-        useOnPreferencesSaved = true;
-        useOnUiManagerInit = true;
-        useOnUpdate = true;
-        useOnInstanceChanged = true;
-        useOnPlayerLeft = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnApplicationStart()
-    {
-        MelonPreferences.CreateCategory(ThisModuleName, $"{BuildInfo.Name} - {ThisModuleName}");
-        radius = MelonPreferences.CreateEntry(ThisModuleName, "Radius", 1.0f, "Radius");
-        speed = MelonPreferences.CreateEntry(ThisModuleName, "Speed", 1.0f, "Speed");
-        _patch = MelonPreferences.CreateEntry(ThisModuleName, "Patch", true, "Patch items on Orbit");
-        _rotx = MelonPreferences.CreateEntry(ThisModuleName, "RotationX", 0.0f, "X Rotation");
-        _roty = MelonPreferences.CreateEntry(ThisModuleName, "RotationY", 0.0f, "Y Rotation");
-        _rotz = MelonPreferences.CreateEntry(ThisModuleName, "RotationZ", 0.0f, "Z Rotation");
+        var thisModuleName = GetType().Name;
+        MelonPreferences.CreateCategory(thisModuleName, $"{BuildInfo.Name} - {thisModuleName}");
+        radius = MelonPreferences.CreateEntry(thisModuleName, "Radius", 1.0f, "Radius");
+        speed = MelonPreferences.CreateEntry(thisModuleName, "Speed", 1.0f, "Speed");
+        _patch = MelonPreferences.CreateEntry(thisModuleName, "Patch", true, "Patch items on Orbit");
+        _rotx = MelonPreferences.CreateEntry(thisModuleName, "RotationX", 0.0f, "X Rotation");
+        _roty = MelonPreferences.CreateEntry(thisModuleName, "RotationY", 0.0f, "Y Rotation");
+        _rotz = MelonPreferences.CreateEntry(thisModuleName, "RotationZ", 0.0f, "Z Rotation");
         _orbitMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu4Columns);
-        _orbitMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
+        _orbitMenu.AddSimpleButton("Go back", () => UiUtils.ClientMenu.Show());
         _orbitMenu.AddSimpleButton("Stop Orbit", StopOrbit);
         _orbitMenu.AddSimpleButton("Circular Orbit", () => SelectOrbit(RotType.CircularRot));
         _orbitMenu.AddSimpleButton("Spherical Orbit", () => SelectOrbit(RotType.SphericalRot));
         _orbitMenu.AddSimpleButton("Cylindrical Orbit", () => SelectOrbit(RotType.CylindricalRot));
-        Main.ClientMenu.AddSimpleButton("Orbit", () => _orbitMenu.Show());
+        UiUtils.ClientMenu.AddSimpleButton("Orbit", () => _orbitMenu.Show());
         OnPreferencesSaved();
     }
 
-    protected sealed override void OnPreferencesSaved()
+    public override void OnPreferencesSaved(string filePath = null)
     {
         rotation = Quaternion.Euler(_rotx.Value, 0, _rotz.Value);
         rotationy = Quaternion.Euler(0, _roty.Value, 0);
     }
 
-    protected override void OnUpdate()
+    public override void OnUpdate()
     {
         if (_pickupOrbits == null || _currentPlayer == null) return;
         Timer += Time.deltaTime;
@@ -92,9 +83,9 @@ internal class Orbit : ModuleBase
         }
     }
 
-    protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => StopOrbit();
+    public override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => StopOrbit();
 
-    protected override void OnPlayerLeft(Player player) { if (_currentPlayer != null && _currentPlayer._player.prop_APIUser_0.id == player.prop_APIUser_0.id) StopOrbit(); }
+    public override void OnPlayerLeft(Player player) { if (_currentPlayer != null && _currentPlayer._player.prop_APIUser_0.id == player.prop_APIUser_0.id) StopOrbit(); }
 
     private void SelectOrbit(RotType type)
     {

@@ -12,8 +12,11 @@
     <ProjectReference Include="..\PMod.Loader\PMod.Loader.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="ModuleBase.cs">
-      <DependentUpon>ModulesManager.cs</DependentUpon>
+    <Compile Update="Config.cs">
+      <DependentUpon>Settings.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Modules\Manager\ModuleEntry.cs">
+      <DependentUpon>Loader.cs</DependentUpon>
     </Compile>
   </ItemGroup>
 </Project>

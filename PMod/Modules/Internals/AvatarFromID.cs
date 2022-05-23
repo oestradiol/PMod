@@ -2,21 +2,15 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using UIExpansionKit.API;
 using VRC.Core;
 using VRC.UI;
+using UIExpansionKit.API;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class AvatarFromID : ModuleBase
+internal class AvatarFromID : VrcMod
 {
-    public AvatarFromID() : base(true)
-    {
-        useOnUiManagerInit = true;
-        RegisterSubscriptions();
-    }
-
-    protected override void OnUiManagerInit() =>
+    public override void OnUiManagerInit() =>
         ExpansionKitApi.GetExpandedMenu(ExpandedMenu.AvatarMenu).AddSimpleButton("Avatar from ID", () =>
         {
             DelegateMethods.InputPopup("Avatar from ID", "Change Avatar",

@@ -3,14 +3,16 @@ using PMod.Loader;
 using System;
 using System.Reflection;
 using MelonLoader;
-using UIExpansionKit.API;
+using PMod.Modules;
+using PMod.Utils;
 using VRC;
 using VRC.Core;
 
-[assembly: AssemblyTitle(PMod.BuildInfo.Name)]
-[assembly: AssemblyCopyright($"Created by {PMod.BuildInfo.Author}")]
-[assembly: AssemblyVersion(PMod.BuildInfo.Version)]
-[assembly: AssemblyFileVersion(PMod.BuildInfo.Version)]
+using BuildInfo = PMod.BuildInfo;
+[assembly: AssemblyTitle(BuildInfo.Name)]
+[assembly: AssemblyCopyright($"Created by {BuildInfo.Author}")]
+[assembly: AssemblyVersion(BuildInfo.Version)]
+[assembly: AssemblyFileVersion(BuildInfo.Version)]
 
 namespace PMod;
 
@@ -18,41 +20,42 @@ public static class BuildInfo
 {
     public const string Name = "PMod";
     public const string Author = "Davi";
-    public const string Version = "1.4.3";
+    public const string Version = "1.4.4";
 }
 #endregion
 
-// TODO: Run benchmark on each event // Was done, might have a memory leakage problem.
-// TODO: ItemGrabber Patch for Udon components. 
-// TODO: OrbitItem to MonoBehaviour
-
+// TODO: Implement support for constructors.
 public static class Main
 {
     internal static readonly MelonLogger.Instance Logger = new(BuildInfo.Name, LInfo.MelonColor);
-    internal static ICustomShowableLayoutedMenu ClientMenu;
 
-    public static void OnApplicationStart()
+    public static void OnPreSupportModule() => Manager.OnPreSupportModule();
+    public static void OnApplicationStart() // TODO: Clean up when implementing constructors
     {
         MelonPreferences.CreateCategory(BuildInfo.Name, $"{BuildInfo.Name} - Base");
-        ClientMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
-        ClientMenu.AddSimpleButton("Close Menu", ClientMenu.Hide);
-        ExpansionKitApi.GetExpandedMenu(ExpandedMenu.QuickMenu).AddSimpleButton(BuildInfo.Name, () => ClientMenu.Show());
-        ModulesManager.Initialize();
-        Patches.OnApplicationStart();
+        UiUtils.Init();
+        Manager.Init();
+        Patches.Init();
         Logger.Msg(ConsoleColor.Green, "Successfully loaded!");
+        Manager.OnApplicationStart();
     }
+    public static void OnApplicationLateStart() => Manager.OnApplicationLateStart();
+    // TODO: Save settings on application quit.
+    public static void OnApplicationQuit() => Manager.OnApplicationQuit();
+    public static void OnUpdate() => Manager.OnUpdate();
+    public static void OnLateUpdate() => Manager.OnLateUpdate();
+    public static void OnFixedUpdate() => Manager.OnFixedUpdate();
+    public static void OnGUI() => Manager.OnGUI();
+    public static void OnPreferencesLoaded(string filePath) => Manager.OnPreferencesLoaded(filePath);
+    public static void OnPreferencesSaved(string filePath) => Manager.OnPreferencesSaved(filePath);
+    public static void OnSceneWasLoaded(int buildIndex, string sceneName) => Manager.OnSceneWasLoaded(buildIndex, sceneName);
+    public static void OnSceneWasInitialized(int buildIndex, string sceneName) => Manager.OnSceneWasInitialized(buildIndex, sceneName);
+    public static void OnSceneWasUnloaded(int buildIndex, string sceneName) => Manager.OnSceneWasUnloaded(buildIndex, sceneName);
     
-    public static void OnPreferencesSaved() => ModulesManager.OnPreferencesSaved?.Invoke();
-    public static void OnSceneWasLoaded(int buildIndex, string sceneName) => ModulesManager.OnSceneWasLoaded?.Invoke(buildIndex, sceneName);
-    public static void OnUpdate() => ModulesManager.OnUpdate?.Invoke();
-    public static void OnFixedUpdate() { }
-    public static void OnLateUpdate() { }
-    public static void OnGUI() { }
-    public static void OnApplicationQuit() { }
-    public static void OnPreferencesLoaded() { }
-    public static void OnSceneWasInitialized(int buildIndex, string sceneName) { }
-    public static void VRChat_OnUiManagerInit() => ModulesManager.OnUiManagerInit?.Invoke();
-    public static void OnPlayerJoined(Player player) => ModulesManager.OnPlayerJoined?.Invoke(player);
-    public static void OnPlayerLeft(Player player) => ModulesManager.OnPlayerLeft?.Invoke(player);
-    public static void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => ModulesManager.OnInstanceChanged?.Invoke(world, instance);
+    
+    // TODO: Add Unity and VRChat UiManagerInits.
+    public static void VRChat_OnUiManagerInit() => Manager.OnUiManagerInit();
+    public static void OnPlayerJoined(Player player) => Manager.OnPlayerJoined(player);
+    public static void OnPlayerLeft(Player player) => Manager.OnPlayerLeft(player);
+    public static void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => Manager.OnInstanceChanged(world, instance);
 }

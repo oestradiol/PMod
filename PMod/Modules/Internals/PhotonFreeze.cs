@@ -1,17 +1,17 @@
-﻿using PMod.Utils;
-using System;
-using UnityEngine;
-using UnhollowerBaseLib;
-using Photon.Pun;
+﻿using System;
 using ExitGames.Client.Photon;
+using Photon.Pun;
+using PMod.Utils;
+using UIExpansionKit.API;
+using UnhollowerBaseLib;
+using UnityEngine;
 using VRC;
 using VRC.Core;
-using UIExpansionKit.API;
 using Object = UnityEngine.Object;
 
-namespace PMod.Modules;
+namespace PMod.Modules.Internals;
 
-internal class PhotonFreeze : ModuleBase
+internal class PhotonFreeze : VrcMod
 {
     private ICustomShowableLayoutedMenu _freezeMenu;
     private Transform _cloneObj;
@@ -20,19 +20,10 @@ internal class PhotonFreeze : ModuleBase
     private int _photonID;
     private bool _isFreeze;
 
-    public PhotonFreeze() : base(true)
-    {
-        useOnApplicationStart = true;
-        useOnPlayerJoined = true;
-        useOnUpdate = true;
-        useOnInstanceChanged = true;
-        RegisterSubscriptions();
-    }
+    public override void OnApplicationStart() =>
+        UiUtils.ClientMenu.AddSimpleButton("PhotonFreeze", ShowFreezeMenu);
 
-    protected override void OnApplicationStart() =>
-        Main.ClientMenu.AddSimpleButton("PhotonFreeze", ShowFreezeMenu);
-
-    protected override void OnPlayerJoined(Player player) 
+    public override void OnPlayerJoined(Player player)
     {
         if (player.prop_APIUser_0.id == Utilities.GetLocalAPIUser().id)
             _photonID = player.gameObject.GetComponent<PhotonView>().viewIdField;
@@ -41,7 +32,7 @@ internal class PhotonFreeze : ModuleBase
     private Vector3 _previousPos;
     private bool _isMaxD;
 
-    protected override void OnUpdate()
+    public override void OnUpdate()
     {
         if (!IsOn.Value) return;
         if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.KeypadMinus))
@@ -63,12 +54,12 @@ internal class PhotonFreeze : ModuleBase
         }
     }
 
-    protected override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => _isFreeze = false;
+    public override void OnInstanceChanged(ApiWorld world, ApiWorldInstance instance) => _isFreeze = false;
 
     private void ShowFreezeMenu()
     {
         _freezeMenu = ExpansionKitApi.CreateCustomQuickMenuPage(LayoutDescription.QuickMenu3Columns);
-        _freezeMenu.AddSimpleButton("Go back", () => Main.ClientMenu.Show());
+        _freezeMenu.AddSimpleButton("Go back", () => UiUtils.ClientMenu.Show());
         _freezeMenu.AddToggleButton("PhotonFreeze", _ => ToggleFreeze(), () => _isFreeze);
         if (_isFreeze) _freezeMenu.AddSimpleButton("TP To Frozen Position", () => { TpPlayerToPos(_originalPos, _originalRot); });
         _freezeMenu.Show();

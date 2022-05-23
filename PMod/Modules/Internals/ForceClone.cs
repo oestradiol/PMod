@@ -7,7 +7,7 @@
 //using APIUser = VRC.Core.APIUser;
 //using PMod.Loader;
 
-//namespace PMod.Modules
+//namespace PMod.Modules.Internals
 //{
 //    internal class ForceClone : ModuleBase
 //    {
