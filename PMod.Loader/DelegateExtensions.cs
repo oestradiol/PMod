@@ -12,21 +12,34 @@ public static class DelegateExtensions
         (Func<Type[],Type>)Delegate.CreateDelegate(typeof(Func<Type[],Type>), 
             typeof(System.Linq.Expressions.Expression).Assembly.GetType("System.Linq.Expressions.Compiler.DelegateHelpers")
                 .GetMethod("MakeNewCustomDelegate", BindingFlags.NonPublic | BindingFlags.Static)!); //Linq should be loaded by default so this shouldn't be null.
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Type MakeNewCustomDelegate(this Type[] types) => InternalMakeNewCustomDelegate(types);
 
-    private static readonly Dictionary<int, Delegate> CachedDelegates = new();
+    private static readonly Dictionary<Type[], Type> CachedCustomDelegateTypes = new();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Type MakeNewCustomDelegate(this Type[] types)
+    {
+        // Cache checking
+        if (CachedCustomDelegateTypes.TryGetValue(types, out var isCached))
+            return isCached;
+        
+        // Delegate type creation
+        var delType = InternalMakeNewCustomDelegate(types);
+        CachedCustomDelegateTypes.Add(types, delType);
+        return delType;
+    }
+
+    private static readonly Dictionary<int, Delegate> CachedMethodDelegates = new();
     public static Delegate CreateDelegate(this MethodInfo methodInfo)
     {
         // Cache checking
-        if (CachedDelegates.TryGetValue(methodInfo.MetadataToken, out var isCached)) return isCached;
+        if (CachedMethodDelegates.TryGetValue(methodInfo.MetadataToken, out var isCached))
+            return isCached;
             
         var args = methodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
         var paramTypes = methodInfo.IsStatic ? args : QueuePush(methodInfo.DeclaringType, args); // decType shouldn't be null if Non-Static
 
         // Delegate type creation
         var del = methodInfo.CreateDelegate(StackPush(paramTypes, methodInfo.ReturnType).MakeNewCustomDelegate());
-        CachedDelegates.Add(methodInfo.MetadataToken, del);
+        CachedMethodDelegates.Add(methodInfo.MetadataToken, del);
         return del;
     }
 

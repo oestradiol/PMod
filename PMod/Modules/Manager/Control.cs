@@ -17,15 +17,13 @@ internal static partial class Manager
 		InitializeModule<AvatarFromID>();
 		InitializeModule<CopyAsset>();
 		InitializeModule<ModsAllower>();
-		// InitializeModule<ForceClone>();
 		InitializeModule<FrozenPlayersManager>();
-		// InitializeModule<InvisibleJoin>();
 		InitializeModule<ItemGrabber>();
-		InitializeModule<Orbit>(); // Not working fully!
-		InitializeModule<PhotonFreeze>(); // Questionable..?
-		InitializeModule<SoftClone>(); //
+		InitializeModule<Orbit>();
+		InitializeModule<PhotonFreeze>();
+		InitializeModule<SoftClone>();
 		InitializeModule<TeleportToCursor>();
-		InitializeModule<Triggers>(); //
+		InitializeModule<Triggers>();
 		
 		LoadExternalModules();
 	}
